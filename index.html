@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pokemon R</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <!-- CSS Files (MUST be in <head>) -->
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="./css/marketplace.css">
+</head>
+<body>
+
+  <!-- Background -->
+  <img src="./assets/images/homescreen.gif" alt="Loop" class="bg-video">
+
+  <!-- Navbar -->
+<!-- Navbar -->
+<nav class="navbar">
+  <!-- LEFT: Logo + Wallet -->
+  <div class="left-group">
+    <div class="logo">Pokemon R</div>
+    <div class="wallet-info" id="wallet-info" style="display: none;">
+      Wallet: <span id="address">0x...</span>
+    </div>
+  </div>
+
+<!-- RIGHT: Marketplace + Login -->
+<div class="right-group">
+  <!-- Marketplace Link (Plain text, appears after connect) -->
+  <a href="marketplace.html" id="marketplace-link" class="nav-link" style="display: none;">
+    Marketplace
+  </a>
+
+  <!-- Login Button -->
+  <button class="login-btn" id="login-btn">
+    <span>Login</span>
+  </button>
+</div>
+</nav>
+
+  <!-- Main Content -->
+  <main class="main">
+    <h1>Pokemon R Adventure</h1>
+    <p>Catch, trade, and battle with your favorite Pokémon!</p>
+    <button class="start-btn" onclick="startGame()">Start Game</button>
+  </main>
+
+  <!-- Scripts at the END of body -->
+  <script src="./js/login.js"></script>
+  <script>
+    function startGame() {
+      alert("Game starting...");
+    }
+  </script>
+
+</body>
+</html>

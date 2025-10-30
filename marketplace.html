@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pokoin NFT Marketplace</title>
+  <link rel="stylesheet" href="css/marketplace.css"/>
+
+  <!-- FIXED ETHERS.JS (WORKS OFFLINE TOO) -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+</head>
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo">Pokemon R</a>
+      <div class="nav-right">
+        <a href="my-nfts.html" class="nav-link">My NFTs</a>
+        <a href="marketplace.html" id="marketplace-link" class="nav-link" style="display: none;">Marketplace</a>
+        <button class="login-btn" id="login-btn">
+          <span>Login</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="container">
+    <header class="market-header">
+      <h1>Pokoin NFT Marketplace</h1>
+      <p id="wallet-info" style="display:none;">
+        Connected: <span id="address"></span>
+      </p>
+    </header>
+
+    <!-- POKÉMON GRID -->
+    <div id="nfts-grid" class="nfts-grid">
+      <p class="loading">Loading Pokémon...</p>
+    </div>
+  </div>
+
+  <!-- ONLY marketplace.js — NO login.js -->
+  <script src="js/marketplace.js"></script>
+  <script>
+    // Connect login button
+    const loginBtn = document.getElementById("login-btn");
+    if (loginBtn) {
+      loginBtn.addEventListener("click", initMarketplace);
+    }
+
+    // Auto-load Pokémon
+    window.addEventListener("load", () => {
+      loadMarketplace();
+    });
+  </script>
+</body>
+</html>

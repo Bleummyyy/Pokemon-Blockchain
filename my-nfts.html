@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Pokémon NFTs</title>
+  <link rel="stylesheet" href="css/marketplace.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo">Pokemon R</a>
+      <div class="nav-right">
+        <a href="marketplace.html" class="nav-link">Marketplace</a>
+        <a href="my-nfts.html" class="nav-link active">My NFTs</a>
+        <button class="login-btn" id="login-btn">
+          <span>Login</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <header class="market-header">
+      <h1>My Pokémon NFTs</h1>
+      <p id="wallet-info" style="display:none;">
+        Connected: <span id="address"></span>
+      </p>
+    </header>
+
+    <div id="my-nfts-grid" class="nfts-grid">
+      <p class="loading">Connect wallet to see your NFTs...</p>
+    </div>
+  </div>
+
+  <!-- SHARED LOGIN + MY NFT LOGIC -->
+  <script src="js/login.js"></script>
+  <script src="js/marketplace.js"></script>
+  <script>
+    const NFT_ADDRESS = "0xd9145CCE52D386f254917e481eB44e9943F39138";
+    const NFT_ABI = [
+      {"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"tokenOfOwnerByIndex","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"getPokemonId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"tokenURI","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"}
+    ];
+
+    let nftContract;
+
+    async function loadMyNFTs() {
+      if (!window.userAddress) {
+        document.getElementById("my-nfts-grid").innerHTML = `<p class="loading">Please login first.</p>`;
+        return;
+      }
+
+      const grid = document.getElementById("my-nfts-grid");
+      grid.innerHTML = `<p class="loading">Loading your NFTs...</p>`;
+
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        nftContract = new ethers.Contract(NFT_ADDRESS, NFT_ABI, signer);
+
+        const balance = await nftContract.balanceOf(window.userAddress);
+        const balanceNum = Number(balance);
+
+        if (balanceNum === 0) {
+          grid.innerHTML = `<p>No NFTs yet. <a href="marketplace.html">Buy one!</a></p>`;
+          return;
+        }
+
+        grid.innerHTML = "";
+        const tokenIds = [];
+
+        for (let i = 0; i < balanceNum; i++) {
+          const tokenId = await nftContract.tokenOfOwnerByIndex(window.userAddress, i);
+          tokenIds.push(tokenId);
+        }
+
+        for (const tokenId of tokenIds) {
+          const pokemonId = await nftContract.getPokemonId(tokenId);
+          const uri = await nftContract.tokenURI(tokenId);
+          const data = await fetch(uri).then(r => r.json());
+
+          const card = document.createElement("div");
+          card.className = "nft-card";
+          card.innerHTML = `
+            <img src="${data.image}" alt="Pokémon" loading="lazy">
+            <div class="nft-info">
+              <h3>#${pokemonId} ${data.name || 'Pokémon'}</h3>
+              <p><strong>HP:</strong> ${data.stats?.[0]?.value || '??'} | <strong>ATK:</strong> ${data.stats?.[1]?.value || '??'}</p>
+              <p class="types">${data.types?.join(' / ') || '??'}</p>
+              <p><small>Token ID: ${tokenId}</small></p>
+            </div>
+          `;
+          grid.appendChild(card);
+        }
+      } catch (err) {
+        console.error(err);
+        grid.innerHTML = `<p class="error">Failed to load NFTs. Check console.</p>`;
+      }
+    }
+
+    // Connect login button
+    document.getElementById("login-btn").addEventListener("click", connectWallet);
+  </script>
+</body>
+</html>
