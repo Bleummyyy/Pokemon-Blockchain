@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pokoin NFT Marketplace</title>
+  <title>PokéMarket</title>
   <link rel="stylesheet" href="css/marketplace.css"/>
 
-  <!-- FIXED ETHERS.JS (WORKS OFFLINE TOO) -->
+  <!-- ETHERS.JS -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
 </head>
 <body>
   <!-- NAVBAR -->
   <nav class="navbar">
     <div class="nav-container">
-      <a href="index.html" class="logo">Pokemon R</a>
+      <a href="index.html" class="logo">PokéMarket</a>
       <div class="nav-right">
+        <a href="marketplace.html" class="nav-link active">Market</a>
         <a href="my-nfts.html" class="nav-link">My NFTs</a>
-        <a href="marketplace.html" id="marketplace-link" class="nav-link" style="display: none;">Marketplace</a>
         <button class="login-btn" id="login-btn">
           <span>Login</span>
         </button>
@@ -25,21 +25,75 @@
   </nav>
 
   <!-- MAIN -->
-  <div class="container">
+  <div class="market-container">
     <header class="market-header">
-      <h1>Pokoin NFT Marketplace</h1>
-      <p id="wallet-info" style="display:none;">
+      <h1>Pokémon NFT Marketplace</h1>
+      <div class="filters">
+  <!-- PRICE FILTER -->
+  <select id="price-filter" onchange="applyFilters()">
+    <option value="">Sort by Price</option>
+    <option value="low">Low to High</option>
+    <option value="high">High to Low</option>
+  </select>
+
+  <!-- RARITY FILTER -->
+  <select id="rarity-filter" onchange="applyFilters()">
+    <option value="">All Rarities</option>
+    <option value="COMMON">Common</option>
+    <option value="UNCOMMON">Uncommon</option>
+    <option value="RARE">Rare</option>
+    <option value="EPIC">Epic</option>
+    <option value="LEGENDARY">Legendary</option>
+  </select>
+
+  <!-- TYPE FILTER -->
+  <select id="type-filter" onchange="applyFilters()">
+    <option value="">All Types</option>
+    <option value="NORMAL">Normal</option>
+    <option value="FIRE">Fire</option>
+    <option value="WATER">Water</option>
+    <option value="GRASS">Grass</option>
+    <option value="ELECTRIC">Electric</option>
+    <option value="ICE">Ice</option>
+    <option value="FIGHTING">Fighting</option>
+    <option value="POISON">Poison</option>
+    <option value="GROUND">Ground</option>
+    <option value="FLYING">Flying</option>
+    <option value="PSYCHIC">Psychic</option>
+    <option value="BUG">Bug</option>
+    <option value="ROCK">Rock</option>
+    <option value="GHOST">Ghost</option>
+    <option value="DRAGON">Dragon</option>
+    <option value="DARK">Dark</option>
+    <option value="STEEL">Steel</option>
+    <option value="FAIRY">Fairy</option>
+  </select>
+
+  <!-- SEARCH -->
+  <input type="text" id="search-input" placeholder="Search Pokémon..." onkeyup="applyFilters()">
+</div>
+
+      
+      <!-- <p id="wallet-info" style="display:none;">
         Connected: <span id="address"></span>
-      </p>
+      </p> -->
     </header>
 
-    <!-- POKÉMON GRID -->
+    <!-- NFT GRID -->
     <div id="nfts-grid" class="nfts-grid">
       <p class="loading">Loading Pokémon...</p>
     </div>
   </div>
 
-  <!-- ONLY marketplace.js — NO login.js -->
+  <div class="pagination">
+  <button id="prev-btn" onclick="changePage(currentPage - 1)" class="page-btn">Previous</button>
+  
+  <div id="page-numbers"></div>
+  
+  <button id="next-btn" onclick="changePage(currentPage + 1)" class="page-btn">Next</button>
+</div>
+
+  <!-- SCRIPTS -->
   <script src="js/marketplace.js"></script>
   <script>
     // Connect login button
