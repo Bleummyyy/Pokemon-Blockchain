@@ -1,0 +1,26 @@
+/* my-nfts.css */
+.loading, .error, .no-nfts {
+  text-align: center;
+  color: #aaa;
+  font-size: 1.1rem;
+  padding: 3rem 1rem;
+  grid-column: 1 / -1;
+}
+
+.no-nfts {
+  color: #00d1ff;
+}
+
+.no-nfts a {
+  color: #00d1ff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.no-nfts a:hover {
+  text-decoration: underline;
+}
+
+.error {
+  color: #ff6b6b;
+}

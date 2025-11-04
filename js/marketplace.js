@@ -1,4 +1,5 @@
-// marketplace.js – INSTANT FILTERS + BACKGROUND LOADING
+// SHARE NFT CONTRACT WITH my-nfts.js
+window.nftContract = null; // Will be set on connect
 
 const PKN_ADDRESS = "0xD7CD2d7Dcb96B9D70A10605F06Ee84C24515D684";
 const NFT_ADDRESS = "0xd9145CCE52D386f254917e481eB44e9943F39138";
@@ -17,7 +18,7 @@ const NFT_ABI = [ /* your ABI */ ];
 window.userAddress = null;
 
 window.currentPage = 1;
-const perPage = 15;
+const perPage = 16;
 let totalPokemons = 0;
 const maxVisiblePages = 5;
 
@@ -312,3 +313,4 @@ window.addEventListener("load", () => {
 
 window.initMarketplace = initMarketplace;
 window.applyFilters = applyFilters;
+
