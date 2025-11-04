@@ -10,6 +10,7 @@
 
   <!-- CSS Files (MUST be in <head>) -->
   <link rel="stylesheet" href="./css/style.css">
+
 </head>
 <body>
 
@@ -17,29 +18,28 @@
   <img src="./assets/images/homescreen.gif" alt="Loop" class="bg-video">
 
   <!-- Navbar -->
-<!-- Navbar -->
-<nav class="navbar">
-  <!-- LEFT: Logo + Wallet -->
-  <div class="left-group">
-    <div class="logo">Pokemon R</div>
-    <div class="wallet-info" id="wallet-info" style="display: none;">
-      Wallet: <span id="address">0x...</span>
+  <nav class="navbar">
+    <!-- LEFT: Logo + Wallet -->
+    <div class="left-group">
+      <div class="logo">Pokemon R</div>
+      <div class="wallet-info" id="wallet-info" style="display: none;">
+        Wallet: <span id="address">0x...</span>
+      </div>
     </div>
-  </div>
 
-<!-- RIGHT: Marketplace + Login -->
-<div class="right-group">
-  <!-- Marketplace Link (Plain text, appears after connect) -->
-  <a href="marketplace.html" id="marketplace-link" class="nav-link" style="display: none;">
-    Marketplace
-  </a>
+    <!-- RIGHT: Marketplace + Login -->
+    <div class="right-group">
+      <!-- Marketplace Link (Plain text, appears after connect) -->
+      <a href="marketplace.html" id="marketplace-link" class="nav-link" style="display: none;">
+        Marketplace
+      </a>
 
-  <!-- Login Button -->
-  <button class="login-btn" id="login-btn">
-    <span>Login</span>
-  </button>
-</div>
-</nav>
+      <!-- Login Button -->
+      <button class="login-btn" id="login-btn">
+        <span>Login</span>
+      </button>
+    </div>
+  </nav>
 
   <!-- Main Content -->
   <main class="main">
@@ -49,9 +49,14 @@
   </main>
 
   <!-- Scripts at the END of body -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <script src="./js/login.js"></script>
   <script>
     function startGame() {
+      if (!window.userAddress) {
+        alert("Please login first!");
+        return;
+      }
       alert("Game starting...");
     }
   </script>

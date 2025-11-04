@@ -14,7 +14,6 @@ const PRICE_MAP = {
 const PKN_ABI = [ /* your ABI */ ];
 const NFT_ABI = [ /* your ABI */ ];
 
-let provider, signer;
 window.userAddress = null;
 
 window.currentPage = 1;
@@ -31,7 +30,7 @@ async function initMarketplace() {
   if (!window.ethereum) return alert("Install MetaMask!");
 
   try {
-    provider = new ethers.BrowserProvider(window.ethereum);
+    provider = new ethers.providers.Web3Provider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
     signer = await provider.getSigner();
     window.userAddress = await signer.getAddress();

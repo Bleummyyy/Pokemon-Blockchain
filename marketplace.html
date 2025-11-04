@@ -6,23 +6,46 @@
   <title>PokéMarket</title>
   <link rel="stylesheet" href="css/marketplace.css"/>
 
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script src="./js/marketplace.js"></script>  <!-- FIRST -->
+  <script src="./js/login.js"></script>        <!-- LAST -->
+
   <!-- ETHERS.JS -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
 </head>
 <body>
   <!-- NAVBAR -->
-  <nav class="navbar">
-    <div class="nav-container">
-      <a href="index.html" class="logo">PokéMarket</a>
-      <div class="nav-right">
-        <a href="marketplace.html" class="nav-link active">Market</a>
-        <a href="my-nfts.html" class="nav-link">My NFTs</a>
-        <button class="login-btn" id="login-btn">
-          <span>Login</span>
-        </button>
-      </div>
+<nav class="navbar">
+  <div class="left-group">
+    <div class="logo">Pokemon R</div>
+    <div class="wallet-info" id="wallet-info" style="display: none;">
+      Wallet: <span id="address">0x...</span>
     </div>
-  </nav>
+  </div>
+
+  <div class="right-group">
+    <a href="marketplace.html" class="nav-link">Marketplace</a>
+    <a href="mynft.html" class="nav-link">Inventory</a>
+
+    <!-- CONNECTED BUTTON -->
+    <button class="nav-link login-btn" id="login-btn">
+      <span>Login</span>
+    </button>
+
+    <!-- PROFILE IMAGE -->
+    <img 
+      src="https://avatars.githubusercontent.com/u/169036190?v=4&size=64" 
+      alt="Profile" 
+      class="nav-link profile-img" 
+      onclick="toggleDropdown()">
+  </div>
+</nav>
+
+<!-- DROPDOWN MENU -->
+<div class="profile-dropdown" id="profile-dropdown" style="display: none;">
+  <div class="dropdown-menu" id="dropdown-menu">
+    <button onclick="logout()" class="logout-btn">Logout</button>
+  </div>
+</div>
 
   <!-- MAIN -->
   <div class="market-container">
@@ -98,7 +121,6 @@
 </div>
 
   <!-- SCRIPTS -->
-  <script src="js/marketplace.js"></script>
   <script>
     // Connect login button
     const loginBtn = document.getElementById("login-btn");
@@ -111,5 +133,16 @@
       loadMarketplace();
     });
   </script>
+
+<!-- At bottom of marketplace.html -->
+  <script>
+    // Auto-init if already connected
+    window.addEventListener("load", () => {
+      if (window.userAddress && typeof initMarketplace === "function") {
+        initMarketplace();
+      }
+    });
+  </script>
+
 </body>
 </html>
