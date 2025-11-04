@@ -18,7 +18,7 @@ let provider, signer;
 window.userAddress = null;
 
 window.currentPage = 1;
-const perPage = 18;
+const perPage = 15;
 let totalPokemons = 0;
 const maxVisiblePages = 5;
 
