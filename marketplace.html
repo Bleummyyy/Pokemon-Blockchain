@@ -193,19 +193,33 @@
 </div>
 
   <!-- SCRIPTS -->
+   
 <script>
-  // Connect login button
-
-  const loginBtn = document.getElementById("login-btn");
-  if (loginBtn) loginBtn.addEventListener("click", initMarketplace);
-
-
-  // Auto-init if already connected
-  window.addEventListener("load", () => {
-    if (window.userAddress && typeof initMarketplace === "function") {
-      initMarketplace();
+    let initCalled = false;
+    
+    // Connect login button
+    const loginBtn = document.getElementById("login-btn");
+    if (loginBtn) {
+        loginBtn.addEventListener("click", function() {
+            if (!initCalled) {
+                initCalled = true;
+                initMarketplace();
+            }
+        });
     }
-  });
+
+    // Auto-init if already connected
+    window.addEventListener("load", function() {
+        if (window.userAddress && typeof initMarketplace === "function") {
+            // Small delay to ensure everything is loaded
+            setTimeout(function() {
+                if (!initCalled) {
+                    initCalled = true;
+                    initMarketplace();
+                }
+            }, 1000);
+        }
+    });
 </script>
 
 
