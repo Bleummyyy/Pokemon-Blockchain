@@ -740,7 +740,7 @@ function showMintingAnimation(pokemonIds) {
     overlay.innerHTML = `
         <div class="fullscreen-video-container">
             <video id="gacha-video" autoplay muted>
-                <source src="Assets/images/roll.mp4" type="video/mp4">
+                <source src="assets/images/roll.mp4" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
         </div>
