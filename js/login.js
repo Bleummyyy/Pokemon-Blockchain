@@ -1,100 +1,3 @@
-// // js/login.js – FINAL: WORKS WITH cdn.jsdelivr.net
-
-// let provider, signer;
-// window.userAddress = null;
-
-// // In login() function, after connecting:
-// if (typeof initMarketplace === "function") {
-//   setTimeout(initMarketplace, 100); // Wait for marketplace.js to load
-// }
-
-// async function login() {
-//   if (!window.ethereum) {
-//     alert("Install MetaMask: https://metamask.io");
-//     window.open("https://metamask.io", "_blank");
-//     return;
-//   }
-
-//   try {
-//     provider = new ethers.providers.Web3Provider(window.ethereum);
-//     await provider.send("eth_requestAccounts", []);
-//     signer = await provider.getSigner();
-//     window.userAddress = await signer.getAddress();
-
-//     localStorage.setItem("walletConnected", "true");
-//     localStorage.setItem("userAddress", window.userAddress);
-
-//     updateWalletUI();
-
-//     const link = document.getElementById("marketplace-link");
-//     if (link) link.style.display = "inline-block";
-
-//     alert("Connected! Marketplace unlocked.");
-
-//     if (typeof loadMarketplace === "function") loadMarketplace();
-//     if (typeof loadMyNFTs === "function") loadMyNFTs();
-
-//   } catch (err) {
-//     console.error(err);
-//     if (err.code === 4001) alert("Cancelled.");
-//     else alert("Error: " + err.message);
-//   }
-// }
-
-// function updateWalletUI() {
-//   const info = document.getElementById("wallet-info");
-//   const addr = document.getElementById("address");
-//   const btnSpan = document.querySelector(".login-btn span");
-//   const loginBtn = document.querySelector(".login-btn");
-
-//   if (info && addr && btnSpan && loginBtn && window.userAddress) {
-//     info.style.display = "block";
-//     addr.textContent = `${window.userAddress.slice(0,6)}...${window.userAddress.slice(-4)}`;
-//     btnSpan.textContent = "Connected";
-//     loginBtn.classList.add("connected");
-//     loginBtn.disabled = true;
-//   }
-// }
-
-// window.addEventListener("load", async () => {
-//   const saved = localStorage.getItem("userAddress");
-//   const connected = localStorage.getItem("walletConnected") === "true";
-
-//   if (connected && saved && !window.userAddress) {
-//     window.userAddress = saved;
-//     try {
-//       provider = new ethers.providers.Web3Provider(window.ethereum);
-//       signer = await provider.getSigner();
-
-//       updateWalletUI();
-
-//       const link = document.getElementById("marketplace-link");
-//       if (link) link.style.display = "inline-block";
-
-//       if (typeof loadMarketplace === "function") loadMarketplace();
-//       if (typeof loadMyNFTs === "function") loadMyNFTs();
-
-//     } catch (err) {
-//       localStorage.clear();
-//       alert("Wallet changed. Reconnect.");
-//     }
-//   }
-// });
-
-// document.addEventListener("DOMContentLoaded", () => {
-//   const btn = document.getElementById("login-btn");
-//   if (btn) btn.addEventListener("click", login);
-// });
-
-
-
-
-
-
-
-
-// js/login.js – FINAL: CONNECTED BUTTON ON ALL PAGES
-
 let provider, signer;
 window.userAddress = null;
 
@@ -106,21 +9,28 @@ async function login() {
   }
 
   try {
-    provider = new ethers.providers.Web3Provider(window.ethereum);
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
-    signer = provider.getSigner();
+    const signer = provider.getSigner();
     window.userAddress = await signer.getAddress();
 
     localStorage.setItem("walletConnected", "true");
     localStorage.setItem("userAddress", window.userAddress);
 
-    updateWalletUI(); // ← THIS UPDATES ALL PAGES
+    updateWalletUI();
 
+    // SHOW MARKETPLACE LINK ON INDEX.HTML
     const link = document.getElementById("marketplace-link");
     if (link) link.style.display = "inline-block";
 
+    // ONLY UPDATE PKN BALANCE IF FUNCTION EXISTS
+    if (typeof updatePKNBalance === "function") {
+      await updatePKNBalance();
+    }
+
     alert("Connected!");
 
+    // Auto-init pages if functions exist
     if (typeof initMarketplace === "function") initMarketplace();
     if (typeof loadMyNFTs === "function") loadMyNFTs();
 
@@ -220,13 +130,19 @@ window.addEventListener("load", async () => {
   if (connected && saved && !window.userAddress) {
     window.userAddress = saved;
     try {
-      provider = new ethers.providers.Web3Provider(window.ethereum);
-      signer = provider.getSigner();
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
 
-      updateWalletUI(); // ← THIS MAKES BUTTON "Connected"
+      updateWalletUI();
 
+      // SHOW MARKETPLACE LINK
       const link = document.getElementById("marketplace-link");
       if (link) link.style.display = "inline-block";
+
+      // UPDATE PKN BALANCE ONLY IF AVAILABLE
+      if (typeof updatePKNBalance === "function") {
+        await updatePKNBalance();
+      }
 
       if (typeof initMarketplace === "function") initMarketplace();
       if (typeof loadMyNFTs === "function") loadMyNFTs();
@@ -238,7 +154,6 @@ window.addEventListener("load", async () => {
     }
   }
 });
-
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("login-btn");
   if (btn) btn.addEventListener("click", login);

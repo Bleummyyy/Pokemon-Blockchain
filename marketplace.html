@@ -3,16 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
   <meta http-equiv="Content-Security-Policy" 
-      content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:; 
-               connect-src 'self' https: http://127.0.0.1:5500;">
+      content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:;
+               connect-src 'self' https: http://127.0.0.1:5500 http://localhost:5500;
+               script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net;
+               style-src 'self' 'unsafe-inline' https:;
+               img-src 'self' data: https: blob:;">
 
   <title>PokéMarket</title>
   <link rel="stylesheet" href="css/marketplace.css"/>
 
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-  <script src="./js/marketplace.js"></script>  <!-- FIRST -->
-  <script src="./js/login.js"></script>        <!-- LAST -->
+<script src="./js/login.js"></script>        <!-- FIRST -->
+<script src="./js/marketplace.js"></script>  <!-- SECOND -->
 
   <!-- ETHERS.JS -->
 </head>
@@ -27,8 +31,11 @@
   </div>
 
   <div class="right-group">
+    <div class="pkn-balance" id="pkn-balance" style="display: none;">
+      PKN: <span id="pkn-amount">0</span>
+    </div>
     <a href="marketplace.html" class="nav-link">Marketplace</a>
-    <a href="mynft.html" class="nav-link">Inventory</a>
+    <a href="my-nfts.html" class="nav-link">Inventory</a>
 
     <!-- CONNECTED BUTTON -->
     <button class="nav-link login-btn" id="login-btn">
@@ -110,6 +117,67 @@
       </p> -->
     </header>
 
+<!-- GACHA MINTING SECTION -->
+<div class="gacha-section">
+    <div class="gacha-header">
+        <h2>🎮 Pokémon Gacha Machine</h2>
+        <p>Mint random Pokémon and discover rare creatures!</p>
+    </div>
+    
+    <div class="gacha-options">
+        <!-- Single Mint -->
+        <div class="gacha-option single-option">
+            <h3>Single Mint</h3>
+            <p>Get 1 random Pokémon</p>
+            <p class="gacha-price">50 PKN</p>
+            <button class="gacha-btn single" onclick="mintRandomPokemon(1)">
+                🎯 Mint 1 Pokémon
+            </button>
+        </div>
+        
+        <!-- Multi Mint -->
+        <div class="gacha-option multi-option">
+            <h3>Multi Mint</h3>
+            <p>Get 5 random Pokémon</p>
+            <p class="gacha-price">
+                <span class="original-price">250 PKN</span> 200 PKN
+            </p>
+            <button class="gacha-btn multi" onclick="mintRandomPokemon(5)">
+                🎁 Mint 5 Pokémon
+            </button>
+        </div>
+        
+        <!-- Premium Mint -->
+        <div class="gacha-option premium-option">
+            <h3>Premium Mint</h3>
+            <p>Get 10 random Pokémon + Guaranteed Rare</p>
+            <p class="gacha-price">
+                <span class="original-price">500 PKN</span> 400 PKN
+            </p>
+            <button class="gacha-btn premium" onclick="mintRandomPokemon(10)">
+                ⭐ Mint 10 Pokémon
+            </button>
+        </div>
+    </div>
+    
+    <div class="gacha-info">
+        <h4>🎲 Gacha Rates</h4>
+        <div class="rarity-rates">
+            <div class="rate-item common">Common: <span>70%</span></div>
+            <div class="rate-item uncommon">Uncommon: <span>20%</span></div>
+            <div class="rate-item rare">Rare: <span>7%</span></div>
+            <div class="rate-item epic">Epic: <span>2.5%</span></div>
+            <div class="rate-item legendary">Legendary: <span>0.5%</span></div>
+        </div>
+    </div>
+</div>
+
+
+<!-- NFT GRID -->
+<div id="nfts-grid" class="nfts-grid">
+  <p class="loading">Loading Pokémon...</p>
+</div>
+
     <!-- NFT GRID -->
     <div id="nfts-grid" class="nfts-grid">
       <p class="loading">Loading Pokémon...</p>
@@ -125,28 +193,21 @@
 </div>
 
   <!-- SCRIPTS -->
-  <script>
-    // Connect login button
-    const loginBtn = document.getElementById("login-btn");
-    if (loginBtn) {
-      loginBtn.addEventListener("click", initMarketplace);
+<script>
+  // Connect login button
+
+  const loginBtn = document.getElementById("login-btn");
+  if (loginBtn) loginBtn.addEventListener("click", initMarketplace);
+
+
+  // Auto-init if already connected
+  window.addEventListener("load", () => {
+    if (window.userAddress && typeof initMarketplace === "function") {
+      initMarketplace();
     }
+  });
+</script>
 
-    // Auto-load Pokémon
-    window.addEventListener("load", () => {
-      loadMarketplace();
-    });
-  </script>
-
-<!-- At bottom of marketplace.html -->
-  <script>
-    // Auto-init if already connected
-    window.addEventListener("load", () => {
-      if (window.userAddress && typeof initMarketplace === "function") {
-        initMarketplace();
-      }
-    });
-  </script>
 
 </body>
 </html>
