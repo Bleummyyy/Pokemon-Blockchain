@@ -2,11 +2,13 @@
 // ==== LOAD PROTECTION ====
 let isLoadingMarketplace = false;
 let hasLoadedMarketplace = false;
+let isInitializing = false;
+let pokemonDataCache = null;
 
 let nftContract, pknContract, marketContract;
 let listedNFTs = [];
 let currentPage = 1;
-const itemsPerPage = 20;
+const itemsPerPage = 15;
 
 // Contract addresses
 const NFT_ADDRESS = "0x190A26bbAFD2Ae85B2eD205Eb01292Ba35Db0A3D";
@@ -75,26 +77,24 @@ const MARKET_ABI = [
 ];
 
 // ==== INIT MARKETPLACE ====
-// ==== INIT MARKETPLACE (WITH PROTECTION) ====
-let isInitializing = false;
-
+// SIMPLIFIED VERSION - remove the protection
 async function initMarketplace() {
     console.log("🚀 initMarketplace called");
     
-    // Prevent multiple initializations
-    if (isInitializing) {
-        console.log("⏸️  Already initializing, skipping...");
-        return;
-    }
-    
+    // SAFETY CHECK: Make sure required elements exist
     if (!window.ethereum || !window.userAddress) {
         console.log("❌ Wallet not connected yet");
         return;
     }
-
-    isInitializing = true;
+    
+    const grid = document.getElementById("nfts-grid");
+    if (!grid) {
+        console.error("❌ nfts-grid element not found on page!");
+        return;
+    }
 
     try {
+        console.log("🔄 Initializing contracts...");
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         const signer = provider.getSigner();
 
@@ -106,14 +106,13 @@ async function initMarketplace() {
         window.pknContract = pknContract;
         window.marketContract = marketContract;
 
+        console.log("✅ Contracts initialized");
         updateMarketplaceUI();
         await updatePKNBalance();
         await loadMarketplace();
 
     } catch (err) {
         console.error("Marketplace init failed:", err);
-    } finally {
-        isInitializing = false;
     }
 }
 
@@ -141,45 +140,7 @@ function updateMarketplaceUI() {
     }
 }
 
-// ==== LOAD MARKETPLACE (FIXED - NO TOTALSUPPLY) ====
-// ==== LOAD MARKETPLACE (WITH LOAD PROTECTION) ====
-// ==== OPTIMIZED LOAD MARKETPLACE (FAST VERSION) ====
-async function loadMarketplace() {
-    console.log("🔄 loadMarketplace called");
-    
-    if (isLoadingMarketplace) return;
-    isLoadingMarketplace = true;
-    
-    const grid = document.getElementById("nfts-grid");
-    if (!grid || !nftContract) {
-        isLoadingMarketplace = false;
-        return;
-    }
 
-    try {
-        grid.innerHTML = `<p class="loading">Loading Pokémon Marketplace...</p>`;
-        listedNFTs = [];
-        
-        console.log("⚡ Starting FAST marketplace load...");
-
-        // METHOD 1: Try to get active listings directly from marketplace (FASTEST)
-        let listedCount = await tryFastMarketplaceLoad();
-        
-        // METHOD 2: If fast method fails, use optimized batch checking
-        if (listedCount === 0) {
-            listedCount = await tryOptimizedBatchLoad();
-        }
-
-        // RENDER RESULTS
-        renderMarketplaceGrid(listedCount);
-
-    } catch (err) {
-        console.error("❌ Marketplace load error:", err);
-        grid.innerHTML = `<p class="error">Failed to load marketplace: ${err.message}</p>`;
-    } finally {
-        isLoadingMarketplace = false;
-    }
-}
 
 // ==== FAST METHOD: Get active listings directly ====
 async function tryFastMarketplaceLoad() {
@@ -784,7 +745,7 @@ function showMintingAnimation(pokemonIds) {
             cleanupFullscreen();
             proceedWithMinting(pokemonIds);
         }
-    }, 3000);
+    }, 5000);
 }
 
 // ==== CLEANUP FULLSCREEN ====
@@ -960,83 +921,308 @@ let marketplaceCache = {
 };
 
 // ==== OPTIMIZED LOAD MARKETPLACE (WITH PROPER CACHING) ====
-// ==== LOAD MARKETPLACE (FIXED VERSION) ====
+// ==== ULTIMATE FAST MARKETPLACE ====
 async function loadMarketplace() {
-    console.log("🔄 Loading marketplace...");
+    console.log("🚀 ULTIMATE FAST Loading marketplace...");
     
     const grid = document.getElementById("nfts-grid");
-    if (!grid) {
-        console.log("❌ No nfts-grid element found");
-        return;
-    }
-
+    if (!grid) return;
+    
     try {
-        grid.innerHTML = `<p class="loading">Loading Pokémon Marketplace...</p>`;
-        listedNFTs = [];
+        grid.innerHTML = `<p class="loading">🚀 Loading marketplace instantly...</p>`;
         
-        console.log("🔍 Scanning for marketplace listings...");
-        
-        let activeListings = 0;
-        const maxTokenCheck = 100;
-        
-        // Check tokens 1-100 for active listings
-        for (let tokenId = 1; tokenId <= maxTokenCheck; tokenId++) {
-            try {
-                // Check if listed in marketplace
-                const listing = await marketContract.getListing(tokenId);
-                
-                // Valid listing has price > 0
-                if (listing.price.gt(0)) {
-                    
-                    // Verify NFT is actually in marketplace contract
-                    const owner = await nftContract.ownerOf(tokenId);
-                    if (owner.toLowerCase() === marketContract.address.toLowerCase()) {
-                        
-                        // Get Pokémon data
-                        const pokemonId = await nftContract.getPokemonId(tokenId);
-                        
-                        try {
-                            // Fetch Pokémon details from PokeAPI
-                            const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`);
-                            if (res.ok) {
-                                const pokemonData = await res.json();
-                                
-                                const nftData = {
-                                    tokenId: tokenId,
-                                    pokemonId: pokemonId.toNumber(),
-                                    name: pokemonData.name.charAt(0).toUpperCase() + pokemonData.name.slice(1),
-                                    image: pokemonData.sprites.other['official-artwork'].front_default || pokemonData.sprites.front_default,
-                                    types: pokemonData.types.map(t => t.type.name.toUpperCase()).join(' / '),
-                                    price: ethers.utils.formatUnits(listing.price, 18),
-                                    owner: listing.seller,
-                                    isListed: true
-                                };
-                                
-                                listedNFTs.push(nftData);
-                                activeListings++;
-                                
-                                console.log(`✅ Loaded listing: ${nftData.name} (#${nftData.pokemonId}) for ${nftData.price} PKN`);
-                            }
-                        } catch (apiErr) {
-                            console.warn(`Failed to fetch Pokémon ${pokemonId} data:`, apiErr.message);
-                        }
-                    }
-                }
-            } catch (err) {
-                // Token doesn't exist or not listed - skip silently
-                continue;
-            }
+        // Load Pokémon data if not cached
+        if (!pokemonDataCache) {
+            const response = await fetch('/pokemondata/pokedex.json');
+            const data = await response.json();
+            pokemonDataCache = {};
+            data.forEach(pokemon => {
+                pokemonDataCache[pokemon.id] = pokemon;
+            });
         }
         
-        console.log(`📊 Marketplace loaded: ${activeListings} listings`);
+        // METHOD 1: Try to get all active listings at once (FASTEST)
+        let listings = [];
+        try {
+            const activeListings = await marketContract.getActiveListings();
+            console.log(`📊 Found ${activeListings.length} active listings via getActiveListings()`);
+            
+            // Process all active listings in parallel
+            const listingPromises = activeListings.map(async (tokenIdBN) => {
+                const tokenId = tokenIdBN.toNumber();
+                try {
+                    const listing = await marketContract.getListing(tokenId);
+                    const pokemonId = await nftContract.getPokemonId(tokenId);
+                    return { tokenId, pokemonId: pokemonId.toNumber(), listing };
+                } catch (e) {
+                    return null;
+                }
+            });
+            
+            listings = (await Promise.all(listingPromises)).filter(Boolean);
+            
+        } catch (err) {
+            console.log("⚠️ getActiveListings failed, using parallel scan...");
+            // Fallback to parallel scanning
+            listings = await scanListingsParallel();
+        }
         
-        // Render the marketplace
-        renderMarketplaceGrid(activeListings);
+        console.log(`✅ Total listings: ${listings.length}`);
+        renderMarketplaceDirect(listings);
         
     } catch (err) {
-        console.error("❌ Marketplace load error:", err);
-        grid.innerHTML = `<p class="error">Failed to load marketplace: ${err.message}</p>`;
+        console.error("Marketplace error:", err);
+        if (grid) grid.innerHTML = `<p class="error">Failed to load marketplace</p>`;
     }
+}
+
+// ==== DIRECT RENDERER ====
+
+
+
+
+// ==== LOAD ALL POKEMON DATA FROM JSON FILES ====
+// ==== ULTRA-FAST MARKETPLACE LOADER ====
+async function loadMarketplace() {
+    console.log("🚀 ULTRA-FAST Loading marketplace...");
+    
+    const grid = document.getElementById("nfts-grid");
+    if (!grid) return;
+    
+    try {
+        grid.innerHTML = `<p class="loading">🚀 Scanning marketplace at warp speed...</p>`;
+        
+        // Load Pokémon data if not cached
+        if (!pokemonDataCache) {
+            console.log("📥 Loading Pokémon JSON data...");
+            const response = await fetch('/pokemondata/pokedex.json');
+            const data = await response.json();
+            pokemonDataCache = {};
+            data.forEach(pokemon => {
+                pokemonDataCache[pokemon.id] = pokemon;
+            });
+            console.log("✅ Pokémon JSON data loaded");
+        }
+        
+        // Use parallel scanning (getActiveListings is failing)
+        console.log("⚡ Scanning for listings in parallel...");
+        const listings = await scanListingsParallel();
+        
+        console.log(`📊 Found ${listings.length} active listings`);
+        
+        // Instant render
+        renderMarketplaceDirect(listings);
+        
+    } catch (err) {
+        console.error("Marketplace error:", err);
+        const grid = document.getElementById("nfts-grid");
+        if (grid) grid.innerHTML = `<p class="error">Failed to load marketplace</p>`;
+    }
+}
+
+// ==== PARALLEL LISTING SCANNER ====
+async function scanListingsParallel() {
+    const listings = [];
+    const batchSize = 10; // Process 10 tokens at once
+    const maxTokenCheck = 100;
+    
+    // Create batches
+    const batches = [];
+    for (let start = 1; start <= maxTokenCheck; start += batchSize) {
+        const end = Math.min(start + batchSize - 1, maxTokenCheck);
+        batches.push({ start, end });
+    }
+    
+    // Process batches in parallel
+    for (const batch of batches) {
+        const { start, end } = batch;
+        
+        // Create promises for this batch
+        const batchPromises = [];
+        for (let tokenId = start; tokenId <= end; tokenId++) {
+            batchPromises.push(checkTokenListing(tokenId));
+        }
+        
+        // Wait for all checks in this batch
+        const batchResults = await Promise.all(batchPromises);
+        
+        // Add valid listings
+        batchResults.forEach(result => {
+            if (result) listings.push(result);
+        });
+        
+        console.log(`📦 Batch ${start}-${end}: ${batchResults.filter(Boolean).length} found`);
+        
+        // Update progress
+        updateLoadingProgress(end, maxTokenCheck);
+    }
+    
+    return listings;
+}
+
+// ==== CHECK SINGLE TOKEN LISTING ====
+async function checkTokenListing(tokenId) {
+    try {
+        const listing = await marketContract.getListing(tokenId);
+        
+        if (listing.price.gt(0)) {
+            const pokemonId = await nftContract.getPokemonId(tokenId);
+            return { 
+                tokenId, 
+                pokemonId: pokemonId.toNumber(), 
+                listing 
+            };
+        }
+    } catch (e) {
+        // Token doesn't exist or error - skip silently
+    }
+    return null;
+}
+
+// ==== LOADING PROGRESS ====
+function updateLoadingProgress(current, total) {
+    const grid = document.getElementById("nfts-grid");
+    const progress = Math.round((current / total) * 100);
+    
+    if (grid && progress < 100) {
+        grid.innerHTML = `
+            <div class="loading" style="text-align: center; padding: 40px;">
+                <h3>🚀 Scanning Marketplace...</h3>
+                <div style="width: 200px; height: 8px; background: #333; border-radius: 4px; margin: 20px auto;">
+                    <div style="width: ${progress}%; height: 100%; background: #00d1ff; border-radius: 4px; transition: width 0.3s;"></div>
+                </div>
+                <p>${progress}% complete (${current}/${total} tokens scanned)</p>
+            </div>
+        `;
+    }
+}
+
+// ==== DIRECT RENDERER ====
+function renderMarketplaceDirect(listings) {
+    const grid = document.getElementById("nfts-grid");
+    if (!grid) {
+        console.error("❌ nfts-grid element not found in render!");
+        return;
+    }
+    
+    grid.innerHTML = "";
+    
+    if (listings.length === 0) {
+        grid.innerHTML = `<div class="no-nfts"><h3>🏪 Marketplace Empty</h3></div>`;
+        return;
+    }
+    
+    const cardsHTML = listings.map(item => {
+        const pokemon = pokemonDataCache[item.pokemonId];
+        if (!pokemon) {
+            console.warn(`Pokémon data not found for ID: ${item.pokemonId}`);
+            return '';
+        }
+        
+        const imageUrl = pokemon.image.hires || pokemon.image.thumbnail || pokemon.image.sprite;
+        const pokemonName = pokemon.name.english;
+        const pokemonTypes = pokemon.type.join(' / ').toUpperCase();
+        const price = ethers.utils.formatUnits(item.listing.price, 18);
+        
+        return `
+            <div class="nft-card">
+                <div class="nft-image-container">
+                    <img src="${imageUrl}" alt="${pokemonName}" loading="lazy">
+                    <div class="nft-rarity">#${pokemon.id}</div>
+                    <div class="listed-badge">FOR SALE</div>
+                </div>
+                <div class="nft-info">
+                    <h3 class="nft-name">${pokemonName}</h3>
+                    <p class="types">${pokemonTypes}</p>
+                    <p class="nft-price">${price} PKN</p>
+                    <p class="nft-owner">Seller: ${item.listing.seller.slice(0, 6)}...${item.listing.seller.slice(-4)}</p>
+                </div>
+                <button class="buy-btn" onclick="buyListedNFT(${item.tokenId})">Buy Now</button>
+            </div>
+        `;
+    }).join('');
+    
+    grid.innerHTML = cardsHTML;
+    console.log(`✅ Marketplace loaded: ${listings.length} Pokémon`);
+}
+
+// ==== INSTANT RENDERER ====
+// ==== INSTANT RENDERER WITH FALLBACKS ====
+function renderMarketplaceWithJSON(listings, grid) {
+    grid.innerHTML = "";
+    
+    if (listings.length === 0) {
+        grid.innerHTML = `<div class="no-nfts"><h3>🏪 Marketplace Empty</h3></div>`;
+        return;
+    }
+    
+    const cardsHTML = listings.map(item => {
+        const pokemon = pokemonDataCache[item.pokemonId];
+        
+        if (!pokemon) {
+            console.warn(`Pokémon data not found for ID: ${item.pokemonId}`);
+            return '';
+        }
+        
+        // Use hires image, fallback to thumbnail, fallback to sprite
+        const imageUrl = pokemon.image.hires || pokemon.image.thumbnail || pokemon.image.sprite;
+        const pokemonName = pokemon.name.english;
+        const pokemonTypes = pokemon.type.join(' / ').toUpperCase();
+        const price = ethers.utils.formatUnits(item.listing.price, 18);
+        
+        return `
+            <div class="nft-card">
+                <div class="nft-image-container">
+                    <img src="${imageUrl}" alt="${pokemonName}" loading="lazy">
+                    <div class="nft-rarity">#${pokemon.id}</div>
+                    <div class="listed-badge">FOR SALE</div>
+                </div>
+                <div class="nft-info">
+                    <h3 class="nft-name">${pokemonName}</h3>
+                    <p class="types">${pokemonTypes}</p>
+                    <p class="nft-price">${price} PKN</p>
+                    <p class="nft-owner">Seller: ${item.listing.seller.slice(0, 6)}...${item.listing.seller.slice(-4)}</p>
+                </div>
+                <button class="buy-btn" onclick="buyListedNFT(${item.tokenId})">Buy Now</button>
+            </div>
+        `;
+    }).join('');
+    
+    grid.innerHTML = cardsHTML;
+    console.log(`✅ Marketplace loaded: ${listings.length} Pokémon`);
+}
+
+function renderMarketplaceWithJSON(listings, pokemonData, grid) {
+    grid.innerHTML = "";
+    
+    if (listings.length === 0) {
+        grid.innerHTML = `<div class="no-nfts"><h3>Marketplace Empty</h3></div>`;
+        return;
+    }
+    
+    const cardsHTML = listings.map(item => {
+        const pokemon = pokemonData[item.pokemonId];
+        if (!pokemon) return '';
+        
+        return `
+            <div class="nft-card">
+                <div class="nft-image-container">
+                    <img src="${pokemon.images.official_artwork}" alt="${pokemon.name}">
+                    <div class="nft-rarity">#${pokemon.id}</div>
+                    <div class="listed-badge">FOR SALE</div>
+                </div>
+                <div class="nft-info">
+                    <h3>${pokemon.name}</h3>
+                    <p class="types">${pokemon.types.join(' / ')}</p>
+                    <p class="nft-price">${ethers.utils.formatUnits(item.listing.price, 18)} PKN</p>
+                </div>
+                <button class="buy-btn" onclick="buyListedNFT(${item.tokenId})">Buy Now</button>
+            </div>
+        `;
+    }).join('');
+    
+    grid.innerHTML = cardsHTML;
+    console.log(`✅ Marketplace loaded: ${listings.length} Pokémon`);
 }
 
 // ==== RENDER MARKETPLACE GRID ====
@@ -1074,7 +1260,6 @@ function renderMarketplaceGrid(listedCount) {
                 <h3 class="nft-name">${nft.name}</h3>
                 <p class="types">${nft.types}</p>
                 <p class="nft-price">${nft.price} PKN</p>
-                <p class="nft-owner">Seller: ${nft.owner.slice(0, 6)}...${nft.owner.slice(-4)}</p>
             </div>
             <button class="buy-btn" onclick="buyNFT(${nft.tokenId})">Buy Now</button>
         `;

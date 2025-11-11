@@ -93,6 +93,227 @@ body {
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s, box-shadow 0.3s;
+  border: 1px solid #333;
+  height: 250px; /* FIXED HEIGHT */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.nft-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(255, 165, 0, 0.3);
+}
+
+/* IMAGE */
+.nft-image-container {
+  height: 160px;
+  background: linear-gradient(135deg, #16213e, #0f1419);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.nft-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+/* RARITY BADGE */
+.nft-rarity {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #ff6b35;
+  color: white;
+  font-size: 0.65rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+/* INFO - ALWAYS VISIBLE */
+.nft-info {
+  padding: 0.8rem 0.8rem 1rem 0.8rem; 
+  max-height: 40px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  background: #1a1a2e;
+  transition: transform 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+/* MOVE NAME & PRICE UP ON HOVER */
+.nft-card:hover .nft-info {
+  transform: translateY(-35px); /* Adjust this value to show more/less */
+}
+
+.nft-name {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nft-id {
+  color: #00d1ff;
+  font-size: 0.8rem;
+}
+
+.nft-price {
+  color: #aaa;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nft-price::before {
+  content: "♦";
+  color: #ff6b35;
+  font-weight: bold;
+}
+
+/* BUY BUTTON - HIDDEN BY DEFAULT, NO SPACE */
+.buy-btn {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, #ff8c00, #ff6b35);
+  color: white;
+  border: none;
+  padding: 0.8rem;
+  font-weight: bold;
+  font-size: 1rem;
+  border-radius: 0 0 16px 16px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  transform: translateY(110%);
+  z-index: 3;
+}
+
+.nft-card:hover .buy-btn {
+  transform: translateY(15%);
+}
+
+/* HOVER OVERLAY */
+
+
+.nft-card:hover::before {
+  opacity: 1;
+}
+
+.nft-card > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* LOADING */
+.loading, .error {
+  text-align: center;
+  padding: 2rem;
+  color: #aaa;
+  font-size: 1.1rem;
+  grid-column: 1 / -1;
+}
+
+.error {
+  color: #ff6b6b;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .nfts-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+  .nft-card { height: 260px; }
+  .nft-image-container { height: 140px; }
+}
+
+@media (max-width: 480px) {
+  .nfts-grid { grid-template-columns: 1fr 1fr; }
+  .nft-card { height: 240px; }
+}
+
+/* LIST FORM STYLING */
+.list-form {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.8rem;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    z-index: 3;
+}
+
+.nft-card:hover .list-form {
+    transform: translateY(-20px);
+}
+
+.list-form input {
+    padding: 8px 12px;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #000;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.list-form input:focus {
+    outline: none;
+    border-color: #ff6b35;
+}
+
+/* Adjust buy button for list form */
+.nft-card .list-form .buy-btn {
+    position: relative;
+    transform: none;
+    bottom: auto;
+    left: auto;
+    margin-top: 5px;
+}
+
+/* Ensure normal info is visible by default */
+.normal-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.hover-info {
+    display: none;
+}
+
+.nft-card:hover .normal-info {
+    display: none;
+}
+
+.nft-card:hover .hover-info {
+    display: flex;
+}
+/* .nft-card {
+  background: #1a1a2e;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
   transition: all 0.3s ease;
   border: 1px solid #333;
   height: 320px;
@@ -105,7 +326,7 @@ body {
   transform: translateY(-8px);
   box-shadow: 0 12px 30px rgba(0, 209, 255, 0.4);
   border-color: #00d1ff;
-}
+} */
 
 /* ==================== OWNED BADGE ==================== */
 .owned-badge {
@@ -488,3 +709,7 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #0099cc;
 }
+
+
+
+/*POP UP UI*/

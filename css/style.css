@@ -50,6 +50,7 @@ body {
 }
 
 .logo {
+    font-family: 'Press Start 2P', cursive;
   font-size: 1.5rem;
   background: linear-gradient(90deg, #5A3CFF, #00D1FF);
   -webkit-background-clip: text;
