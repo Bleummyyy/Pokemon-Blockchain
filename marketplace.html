@@ -128,21 +128,29 @@
     
     <div class="gacha-options">
         <!-- Single Mint -->
+
         <div class="gacha-option single-option">
-            <h3>Single Mint</h3>
-            <p>Get 1 random Pokémon</p>
-            <p class="gacha-price">50 PKN</p>
-            <button class="gacha-btn single" onclick="mintRandomPokemon(1)">
-                🎯 Mint 1 Pokémon
-            </button>
+          <h3>Single Mint</h3>
+          <p>Get 1 random Pokémon</p>
+
+          <!-- FREE FIRST MINT -->
+          <p class="gacha-price" id="free-price" style="color:#00ff88;">FREE (First Time)</p>
+          <button id="free-mint-btn" class="gacha-btn single free" onclick="mintRandomPokemon(1, true)">
+            🎯 Mint 1 Pokémon (FREE)
+          </button>
+
+          <!-- NORMAL PAID MINT -->
+          <p class="gacha-price" id="paid-price" style="display:none;">100 PKN</p>
+          <button id="paid-mint-btn" class="gacha-btn single paid" onclick="mintRandomPokemon(1, false)" style="display:none;">
+            🎯 Mint 1 Pokémon (100 PKN)
+          </button>
         </div>
         
         <!-- Multi Mint -->
         <div class="gacha-option multi-option">
             <h3>Multi Mint</h3>
             <p>Get 5 random Pokémon</p>
-            <p class="gacha-price">
-                <span class="original-price">250 PKN</span> 200 PKN
+            <p class="gacha-price"> 500 PKN
             </p>
             <button class="gacha-btn multi" onclick="mintRandomPokemon(5)">
                 🎁 Mint 5 Pokémon
@@ -153,8 +161,7 @@
         <div class="gacha-option premium-option">
             <h3>Premium Mint</h3>
             <p>Get 10 random Pokémon + Guaranteed Rare</p>
-            <p class="gacha-price">
-                <span class="original-price">500 PKN</span> 400 PKN
+            <p class="gacha-price"> 1,000 PKN
             </p>
             <button class="gacha-btn premium" onclick="mintRandomPokemon(10)">
                 ⭐ Mint 10 Pokémon
@@ -222,6 +229,18 @@
             }, 1000);
         }
     });
+</script>
+
+<script>
+  function updateMintButtons() {
+    const used = localStorage.getItem("hasUsedFreeMint") === "true";
+    document.getElementById("free-price").style.display   = used ? "none" : "block";
+    document.getElementById("free-mint-btn").style.display= used ? "none" : "block";
+    document.getElementById("paid-price").style.display   = used ? "block" : "none";
+    document.getElementById("paid-mint-btn").style.display= used ? "block" : "none";
+  }
+  // run on load
+  updateMintButtons();
 </script>
 
 

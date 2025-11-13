@@ -252,7 +252,7 @@ async function completeLogin() {
     await updatePKNBalance();
   }
 
-  alert("Connected! All Pokémon data loaded. 🚀");
+  alert("Connected! All Pokémon data loaded");
 
   // Auto-init pages if functions exist - NOW THEY WILL BE INSTANT!
   if (typeof initMarketplace === "function") initMarketplace();
@@ -363,7 +363,7 @@ window.addEventListener("load", async () => {
       const cachedPokemonData = localStorage.getItem("pokemonData");
       if (cachedPokemonData) {
         window.pokemonData = JSON.parse(cachedPokemonData);
-        console.log("✅ Loaded cached Pokémon data");
+        console.log("Loaded cached Pokémon data");
       }
 
       // UPDATE PKN BALANCE ONLY IF AVAILABLE
