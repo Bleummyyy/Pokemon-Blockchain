@@ -186,7 +186,6 @@ body {
   color: #00d1ff;
   font-weight: bold;
   font-size: 0.9rem;
-  margin: 0.4rem 0 0;
   text-shadow: 0 0 8px rgba(0, 209, 255, 0.4);
 }
 
@@ -311,6 +310,7 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
+  margin-top: -6px;
 }
 
 .nft-price::before {
@@ -1140,4 +1140,16 @@ body.minting-fullscreen {
     background: linear-gradient(90deg, #00d1ff, #0099cc);
     border-radius: 4px;
     transition: width 0.3s ease;
+}
+
+.type-badges-container {
+    gap: 6px;
+}
+
+.type-badge {
+    width: 55px;        /* Adjust width */
+    height: 30px;       /* Adjust height */
+    object-fit: contain; /* Maintain aspect ratio */
+    margin-right: 7px;
+
 }

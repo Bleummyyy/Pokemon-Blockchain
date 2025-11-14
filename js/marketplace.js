@@ -306,11 +306,56 @@ async function processSinglePokemon(pokemonId) {
 // ==== RENDER MARKETPLACE GRID ====
 function renderMarketplaceGrid(listedCount) {
     const grid = document.getElementById("nfts-grid");
+    if (!grid) return;
+    
     grid.innerHTML = "";
     
-    console.log(`Rendering ${listedCount} Pokémon...`);
+    console.log(`Rendering ${listedCount} Pokémon in marketplace...`);
     
-    for (const nft of listedNFTs) {
+    if (listedCount === 0) {
+        grid.innerHTML = `
+            <div class="no-nfts">
+                <h3>🏪 Marketplace Empty</h3>
+                <p>No Pokémon are currently listed for sale.</p>
+                <p>Be the first to list your Pokémon!</p>
+            </div>`;
+        return;
+    }
+    
+    listedNFTs.sort((a, b) => a.tokenId - b.tokenId);
+    
+    listedNFTs.forEach(nft => {
+        // Parse types - handle both number arrays and string formats
+        let typeNumbers = [];
+        
+        if (Array.isArray(nft.types)) {
+            typeNumbers = nft.types;
+        } else if (typeof nft.types === 'string') {
+            // Handle string format like "1 / 2" or "normal / fighting"
+            typeNumbers = nft.types.split(' / ').map(typeStr => {
+                // Try to parse as number first
+                const num = parseInt(typeStr.trim());
+                if (!isNaN(num)) return num;
+                
+                // If it's a string name, convert to number using TYPE_NUMBER
+                return TYPE_NUMBER[typeStr.trim().toLowerCase()];
+            }).filter(num => num !== undefined && !isNaN(num));
+        }
+        
+        // Generate type badges using number images
+        const typeBadgesHTML = typeNumbers.map(typeNumber => {
+            const typeName = NUMBER_TO_TYPE[typeNumber];
+            if (!typeName) {
+                console.warn(`Unknown type number: ${typeNumber}`);
+                return `<span class="type-fallback">Type ${typeNumber}</span>`;
+            }
+            return `<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-viii/brilliant-diamond-and-shining-pearl/${typeNumber}.png" 
+                      alt="${typeName}" 
+                      class="type-badge"
+                      title="${typeName.charAt(0).toUpperCase() + typeName.slice(1)}"
+                      onerror="this.style.display='none'">`;
+        }).join('');
+        
         const card = document.createElement("div");
         card.className = "nft-card";
         card.innerHTML = `
@@ -321,26 +366,17 @@ function renderMarketplaceGrid(listedCount) {
             </div>
             <div class="nft-info">
                 <h3 class="nft-name">${nft.name}</h3>
-                <p class="types">${nft.types}</p>
+                <div class="type-badges-container">
+                    ${typeBadgesHTML}
+                </div>
                 <p class="nft-price">${nft.price} PKN</p>
-                <p class="nft-owner">Seller: ${nft.owner.slice(0, 6)}...${nft.owner.slice(-4)}</p>
             </div>
-            <button class="buy-btn" onclick="buyListedNFT(${nft.tokenId})">Buy Now</button>
+            <button class="buy-btn" onclick="buyNFT(${nft.tokenId})">Buy Now</button>
         `;
         grid.appendChild(card);
-    }
+    });
     
-    console.log(`Marketplace loaded: ${listedCount} Pokémon`);
-    
-    if (listedCount === 0) {
-        grid.innerHTML = `
-            <div class="no-nfts">
-                <h3>Marketplace Empty</h3>
-                <p>No Pokémon are currently listed for sale.</p>
-            </div>`;
-    } else {
-        applyFilters();
-    }
+    console.log(`Marketplace rendered: ${listedCount} Pokémon`);
 }
 
 // ==== LOADING PROGRESS INDICATOR ====
@@ -586,6 +622,7 @@ function generateRandomPokemon(guaranteedRare = false) {
 }
 
 /* =================  mintRandomPokemon  ================= */
+// ==== ULTRA-RELIABLE MINTING SYSTEM ====
 async function mintRandomPokemon(count = 1, isFree = false) {
   console.log(`mintRandomPokemon | count:${count}  isFree:${isFree}`);
 
@@ -594,62 +631,241 @@ async function mintRandomPokemon(count = 1, isFree = false) {
     return;
   }
 
-  /* ---- 1st-single-mint FREE check ---- */
-  const isFirstFree = isFree &&
-                      count === 1 &&
-                      !localStorage.getItem("hasUsedFreeMint");
+  // Generate Pokémon IDs first
+  const pokemonIds = [];
+  const guaranteedRare = count === 10;
+  
+  for (let i = 0; i < count; i++) {
+    let rnd;
+    let attempts = 0;
+    do {
+      rnd = generateRandomPokemon(guaranteedRare && i === 0);
+      if (!await nftContract.pokemonMinted(rnd.pokemonId)) break;
+      attempts++;
+      if (attempts > 50) {
+        // Emergency fallback: find any unminted Pokémon
+        for (let id = 1; id <= 1025; id++) {
+          if (!await nftContract.pokemonMinted(id)) {
+            rnd = { pokemonId: id };
+            break;
+          }
+        }
+        break;
+      }
+    } while (true);
+    pokemonIds.push(rnd.pokemonId);
+  }
 
+  console.log("Generated Pokémon IDs:", pokemonIds);
+
+  // Show animation
+  showMintingAnimation(pokemonIds);
+  
+  // Use the new reliable minting approach
+  await reliableBatchMint(pokemonIds, isFree);
+}
+
+// ==== RELIABLE BATCH MINTING ====
+async function reliableBatchMint(pokemonIds, isFirstFree = false) {
+  console.log("Starting RELIABLE batch mint:", pokemonIds);
+  
+  const results = [];
+  
   try {
-    const totalPrice = isFirstFree
-      ? ethers.BigNumber.from(0)
-      : MINT_PRICES[count];
+    // Price calculation
+    const PRICE = ethers.utils.parseUnits("100", 18);
+    const totalPrice = isFirstFree ? ethers.BigNumber.from(0) : PRICE.mul(pokemonIds.length);
 
-    /* ---- balance / allowance (skip if free) ---- */
+    // Balance check
     if (!totalPrice.isZero()) {
       const balance = await pknContract.balanceOf(window.userAddress);
       if (balance.lt(totalPrice)) {
         alert(`Insufficient PKN! You need ${ethers.utils.formatUnits(totalPrice, 18)} PKN.`);
+        cleanupFullscreen();
         return;
       }
+    }
+
+    // Allowance check
+    if (!totalPrice.isZero()) {
       const allowance = await pknContract.allowance(window.userAddress, NFT_ADDRESS);
       if (allowance.lt(totalPrice)) {
+        console.log("Approving PKN...");
         const approveTx = await pknContract.approve(NFT_ADDRESS, totalPrice);
         await approveTx.wait();
+        console.log("Approval confirmed");
       }
     }
 
-    /* ---- generate Pokémon IDs ---- */
-    const pokemonIds = [];
-    const guaranteedRare = count === 10;
-    for (let i = 0; i < count; i++) {
-      let rnd;
-      let attempts = 0;
-      do {
-        rnd = generateRandomPokemon(guaranteedRare && i === 0);
-        if (!await nftContract.pokemonMinted(rnd.pokemonId)) break;
-        attempts++;
-        if (attempts > 50) { /* emergency fallback */ 
-          for (let id = 1; id <= 1025; id++) {
-            if (!await nftContract.pokemonMinted(id)) { rnd = { pokemonId: id }; break; }
-          }
-          break;
-        }
-      } while (true);
-      pokemonIds.push(rnd.pokemonId);
+    // MINT EACH POKÉMON WITH ON-CHAIN VERIFICATION
+    for (let i = 0; i < pokemonIds.length; i++) {
+      const pokemonId = pokemonIds[i];
+      const uri = `https://pokeapi.co/api/v2/pokemon/${pokemonId}`;
+      
+      console.log(`🎯 Minting Pokémon #${pokemonId}...`);
+      
+      // METHOD 1: Try direct mint with minimal error handling
+      let mintSuccess = await attemptSimpleMint(pokemonId, uri);
+      
+      // METHOD 2: If that fails, verify on-chain state
+      if (!mintSuccess) {
+        console.log(`🔄 Checking on-chain state for #${pokemonId}...`);
+        mintSuccess = await verifyPokemonOwnership(pokemonId);
+      }
+      
+      if (mintSuccess) {
+        results.push({ pokemonId, success: true });
+        console.log(`✅ CONFIRMED: Pokémon #${pokemonId} is in your inventory!`);
+      } else {
+        results.push({ pokemonId, success: false });
+        console.log(`❌ Pokémon #${pokemonId} mint failed`);
+      }
+      
+      // Update UI progress
+      updateMintProgress(i + 1, pokemonIds.length);
     }
 
-    /* ---- mark free mint used ---- */
-    if (isFirstFree) localStorage.setItem("hasUsedFreeMint", "true");
-
-    /* ---- minting animation + tx ---- */
-    showMintingAnimation(pokemonIds);
-    await proceedWithMinting(pokemonIds, isFirstFree);   // pass flag down
-
   } catch (err) {
-    console.error("Gacha mint error:", err);
-    alert("Minting failed: " + (err.reason || err.message));
+    console.error("Batch mint error:", err);
+    
+    // Even if there's an error, check what actually got minted
+    console.log("🔄 Verifying all Pokémon after error...");
+    for (const pokemonId of pokemonIds) {
+      if (!results.some(r => r.pokemonId === pokemonId)) {
+        const verified = await verifyPokemonOwnership(pokemonId);
+        results.push({ pokemonId, success: verified });
+        console.log(`Post-error verification #${pokemonId}:`, verified ? "SUCCESS" : "FAILED");
+      }
+    }
+  } finally {
+    // ALWAYS show results based on actual on-chain state
+    showFinalMintResults(results);
+    cleanupFullscreen();
+    updateMintButtons();
+    await updatePKNBalance();
+    await loadMarketplace();
   }
 }
+
+// ==== SIMPLE MINT ATTEMPT ====
+async function attemptSimpleMint(pokemonId, uri) {
+  try {
+    console.log(`Attempting mint for #${pokemonId}...`);
+    
+    // Just send the transaction and don't over-complicate it
+    const tx = await nftContract.mint(pokemonId, uri, {
+      gasLimit: 300000 // Ensure enough gas
+    });
+    
+    console.log(`Transaction sent: ${tx.hash}`);
+    
+    // Wait for transaction but don't stress about the result
+    try {
+      const receipt = await tx.wait();
+      console.log(`Transaction mined: ${receipt.blockNumber}`);
+      
+      // Check if transaction actually succeeded
+      if (receipt.status === 1) {
+        return true;
+      } else {
+        console.log(`Transaction status failed: ${receipt.status}`);
+        return false;
+      }
+    } catch (receiptError) {
+      console.log("Receipt error (but transaction might have succeeded):", receiptError.message);
+      // Don't return false yet - we'll verify on-chain
+      return null; // Unknown state
+    }
+    
+  } catch (mintError) {
+    console.log(`Mint attempt error for #${pokemonId}:`, mintError.message);
+    return false; // Definitely failed
+  }
+}
+
+// ==== ON-CHAIN VERIFICATION ====
+async function verifyPokemonOwnership(pokemonId) {
+  try {
+    // Wait a moment for blockchain state to update
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    console.log(`🔍 Verifying ownership of #${pokemonId}...`);
+    
+    // Check if Pokémon is minted
+    const isMinted = await nftContract.pokemonMinted(pokemonId);
+    console.log(`#${pokemonId} minted:`, isMinted);
+    
+    if (isMinted) {
+      // Check if you own it
+      const owner = await nftContract.ownerOf(pokemonId);
+      const youOwnIt = owner.toLowerCase() === window.userAddress.toLowerCase();
+      console.log(`#${pokemonId} owner:`, owner, "You own it:", youOwnIt);
+      
+      return youOwnIt;
+    }
+    
+    return false;
+  } catch (error) {
+    console.log(`Verification failed for #${pokemonId}:`, error.message);
+    return false;
+  }
+}
+
+// ==== PROGRESS UPDATER ====
+function updateMintProgress(current, total) {
+  const overlay = document.getElementById('minting-overlay');
+  if (overlay) {
+    const pct = Math.round((current / total) * 100);
+    overlay.innerHTML = `
+      <div class="minting-content">
+        <div style="font-size:3rem;margin-bottom:20px;">🔄</div>
+        <h2 style="color:#00d1ff;margin-bottom:20px;">Minting Pokémon...</h2>
+        <div class="minting-spinner"></div>
+        <p>Processing ${current}/${total} (${pct}%)</p>
+        <p style="color:#aaa;font-size:0.9rem;margin-top:10px;">Verifying on-chain...</p>
+      </div>`;
+  }
+}
+
+// ==== FINAL RESULTS DISPLAY ====
+function showFinalMintResults(results) {
+  const successCount = results.filter(r => r.success).length;
+  const failedCount = results.filter(r => !r.success).length;
+  
+  console.log("FINAL ON-CHAIN RESULTS:", results);
+  
+  if (successCount === results.length) {
+    alert(`🎉 SUCCESS! All ${successCount} Pokémon are in your inventory!`);
+  } else if (successCount > 0) {
+    alert(`✅ ${successCount} Pokémon successfully minted to your inventory!\n❌ ${failedCount} failed to mint.`);
+  } else {
+    alert(`❌ No Pokémon were minted. All ${failedCount} attempts failed.`);
+  }
+  
+  // Log detailed results to console for debugging
+  results.forEach(result => {
+    if (result.success) {
+      console.log(`🎯 Pokémon #${result.pokemonId}: SUCCESS - Check your inventory!`);
+    } else {
+      console.log(`💥 Pokémon #${result.pokemonId}: FAILED - Not in your inventory`);
+    }
+  });
+}
+
+// ==== UPDATE YOUR GACHA BUTTONS ====
+function updateMintButtons() {
+  const gachaButtons = document.querySelectorAll('.gacha-btn');
+  gachaButtons.forEach(btn => {
+    btn.disabled = false;
+    btn.innerHTML = btn.classList.contains('single') ? '🎯 Mint 1 Pokémon' : 
+                    btn.classList.contains('multi') ? '🎁 Mint 5 Pokémon' : 
+                    '⭐ Mint 10 Pokémon';
+  });
+}
+
+// Make sure these are global
+window.mintRandomPokemon = mintRandomPokemon;
+window.reliableBatchMint = reliableBatchMint;
 /* ======================================================= */
 
 // ==== PRE-MINT DIAGNOSTIC ====
@@ -793,6 +1009,59 @@ function showPlayButton() {
 
 
 /* =================  proceedWithMinting  ================= */
+async function debugMintTransaction(pokemonId, uri) {
+    console.log("=== DEBUG MINT TRANSACTION ===");
+    console.log("Pokémon ID:", pokemonId);
+    console.log("URI:", uri);
+    
+    try {
+        // Check current state
+        const isMintedBefore = await nftContract.pokemonMinted(pokemonId);
+        console.log("Minted before?", isMintedBefore);
+        
+        // Call mint function
+        console.log("Calling mint function...");
+        const tx = await nftContract.mint(pokemonId, uri);
+        console.log("Transaction sent:", tx.hash);
+        
+        // Wait for confirmation
+        console.log("Waiting for confirmation...");
+        const receipt = await tx.wait();
+        console.log("Transaction receipt:", receipt);
+        
+        // Check final state
+        const isMintedAfter = await nftContract.pokemonMinted(pokemonId);
+        const owner = await nftContract.ownerOf(pokemonId);
+        console.log("Minted after?", isMintedAfter);
+        console.log("Owner:", owner);
+        console.log("You are:", window.userAddress);
+        console.log("Ownership match:", owner.toLowerCase() === window.userAddress.toLowerCase());
+        
+        return { success: true, receipt, owner };
+        
+    } catch (err) {
+        console.error("Debug mint error:", err);
+        // Even if there's an error, check if it was actually minted
+        try {
+            const isMintedAfter = await nftContract.pokemonMinted(pokemonId);
+            const owner = await nftContract.ownerOf(pokemonId);
+            console.log("Despite error - Minted after?", isMintedAfter);
+            console.log("Despite error - Owner:", owner);
+            console.log("Despite error - Ownership match:", owner.toLowerCase() === window.userAddress.toLowerCase());
+            
+            if (isMintedAfter && owner.toLowerCase() === window.userAddress.toLowerCase()) {
+                console.log("🎯 FALSE NEGATIVE: Transaction succeeded despite error!");
+                return { success: true, recovered: true, owner };
+            }
+        } catch (checkError) {
+            console.error("Couldn't check mint status:", checkError);
+        }
+        
+        return { success: false, error: err };
+    }
+}
+
+
 async function proceedWithMinting(pokemonIds, isFirstFree = false) {
   console.log("proceedWithMinting | ids:", pokemonIds, "isFirstFree:", isFirstFree);
 
@@ -808,22 +1077,23 @@ async function proceedWithMinting(pokemonIds, isFirstFree = false) {
       </div>`;
   }
 
+  const results = [];
+  
   try {
-    const PRICE = ethers.utils.parseUnits("100", 18);   // contract price per mint
-    const totalPrice = isFirstFree
-      ? ethers.BigNumber.from(0)
-      : PRICE.mul(pokemonIds.length);
+    const PRICE = ethers.utils.parseUnits("100", 18);
+    const totalPrice = isFirstFree ? ethers.BigNumber.from(0) : PRICE.mul(pokemonIds.length);
 
-    /* ---- balance (skip if free) ---- */
+    // Balance check (skip if free)
     if (!totalPrice.isZero()) {
       const balance = await pknContract.balanceOf(window.userAddress);
       if (balance.lt(totalPrice)) {
         alert(`Insufficient PKN! You need ${ethers.utils.formatUnits(totalPrice, 18)} PKN.`);
-        cleanupFullscreen(); return;
+        cleanupFullscreen(); 
+        return;
       }
     }
 
-    /* ---- allowance (skip if free) ---- */
+    // Allowance check (skip if free)
     if (!totalPrice.isZero()) {
       const allowance = await pknContract.allowance(window.userAddress, NFT_ADDRESS);
       if (allowance.lt(totalPrice)) {
@@ -832,36 +1102,106 @@ async function proceedWithMinting(pokemonIds, isFirstFree = false) {
       }
     }
 
-    /* ---- mint loop ---- */
-    const results = [];
+    // Mint each Pokémon
     for (let i = 0; i < pokemonIds.length; i++) {
       const pokemonId = pokemonIds[i];
       const uri = `https://pokeapi.co/api/v2/pokemon/${pokemonId}`;
-      const tx = await nftContract.mint(pokemonId, uri);
-      const receipt = await tx.wait();
-      results.push({ pokemonId, success: true, txHash: tx.hash });
+      
+      console.log(`🔄 Minting Pokémon #${pokemonId}...`);
+      
+      try {
+        // Use the debug function to see what's actually happening
+        const mintResult = await debugMintTransaction(pokemonId, uri);
+        
+        if (mintResult.success) {
+          if (mintResult.recovered) {
+            console.log(`✅ RECOVERED: Pokémon #${pokemonId} was minted successfully despite UI error`);
+            results.push({ pokemonId, success: true, recovered: true });
+          } else {
+            console.log(`✅ SUCCESS: Pokémon #${pokemonId} minted successfully`);
+            results.push({ pokemonId, success: true });
+          }
+        } else {
+          console.log(`❌ FAILED: Pokémon #${pokemonId} mint failed`);
+          results.push({ pokemonId, success: false, error: mintResult.error });
+        }
 
+      } catch (mintError) {
+        console.error(`Unexpected error minting #${pokemonId}:`, mintError);
+        
+        // Final fallback: check if it was actually minted despite the error
+        try {
+          const owner = await nftContract.ownerOf(pokemonId);
+          if (owner.toLowerCase() === window.userAddress.toLowerCase()) {
+            console.log(`🎯 FINAL RECOVERY: Pokémon #${pokemonId} belongs to you!`);
+            results.push({ pokemonId, success: true, recovered: true });
+          } else {
+            results.push({ pokemonId, success: false, error: mintError.message });
+          }
+        } catch (ownerError) {
+          results.push({ pokemonId, success: false, error: mintError.message });
+        }
+      }
+
+      // Update progress
       if (overlay) {
         const pct = Math.round(((i + 1) / pokemonIds.length) * 100);
         const p = overlay.querySelector('p');
-        if (p) p.textContent = `Minted ${i + 1}/${pokemonIds.length} Pokémon (${pct}%)`;
+        if (p) p.textContent = `Processing ${i + 1}/${pokemonIds.length} Pokémon (${pct}%)`;
       }
     }
 
-    /* ---- final UI ---- */
+  } catch (err) {
+    console.error("Overall proceedWithMinting error:", err);
+    // Even if there's an overall error, check what actually got minted
+    for (const pokemonId of pokemonIds) {
+      try {
+        const owner = await nftContract.ownerOf(pokemonId);
+        if (owner.toLowerCase() === window.userAddress.toLowerCase()) {
+          console.log(`🔄 Checking #${pokemonId} after overall error: SUCCESS`);
+          if (!results.some(r => r.pokemonId === pokemonId)) {
+            results.push({ pokemonId, success: true, recovered: true });
+          }
+        }
+      } catch (e) {
+        // Pokémon not minted
+        if (!results.some(r => r.pokemonId === pokemonId)) {
+          results.push({ pokemonId, success: false, error: "Overall process failed" });
+        }
+      }
+    }
+  } finally {
+    // Always clean up and show results
     cleanupFullscreen();
-    showMintResults(results);
-    updateMintButtons();          // instantly swap to paid button
+    showAccurateMintResults(results);
+    updateMintButtons();
     await updatePKNBalance();
     await loadMarketplace();
+  }
+}
 
-  } catch (err) {
-    console.error("proceedWithMinting error:", err);
-    cleanupFullscreen();
-    if (err.code === 'ACTION_REJECTED') alert("Transaction rejected by user.");
-    else if (err.message.includes('execution reverted'))
-      alert("Contract rejected the transaction. Possible reasons:\n• Pokémon already minted\n• Invalid ID\n• Insufficient PKN / allowance");
-    else alert("Minting failed: " + (err.reason || err.message));
+// NEW: More accurate results display
+function showAccurateMintResults(results) {
+  const successCount = results.filter(r => r.success).length;
+  const recoveredCount = results.filter(r => r.recovered).length;
+  const failedCount = results.filter(r => !r.success).length;
+  
+  console.log("FINAL MINT RESULTS:", { successCount, recoveredCount, failedCount, results });
+  
+  if (successCount === results.length) {
+    if (recoveredCount > 0) {
+      alert(`🎉 Success! All ${successCount} Pokémon were minted! \n(Some had minor display issues but worked correctly)`);
+    } else {
+      alert(`🎉 Success! All ${successCount} Pokémon were minted successfully!`);
+    }
+  } else if (successCount > 0) {
+    if (recoveredCount > 0) {
+      alert(`✅ ${successCount} Pokémon minted successfully! \n(${recoveredCount} had display issues but worked)\n❌ ${failedCount} failed completely.`);
+    } else {
+      alert(`✅ ${successCount} Pokémon minted successfully!\n❌ ${failedCount} failed.`);
+    }
+  } else {
+    alert("❌ All mints failed. Check console for details.");
   }
 }
 /* ======================================================= */
@@ -1079,12 +1419,44 @@ function updateLoadingProgress(current, total) {
 }
 
 // ==== DIRECT RENDERER ====
+const TYPE_MAPPING = {
+    // Name to Number (for images)
+    normal: 1,
+    fighting: 2, 
+    flying: 3,
+    poison: 4,
+    ground: 5,
+    rock: 6,
+    bug: 7,
+    ghost: 8,
+    steel: 9,
+    fire: 10,
+    water: 11,
+    grass: 12,
+    electric: 13,
+    psychic: 14,
+    ice: 15,
+    dragon: 16,
+    dark: 17,
+    fairy: 18
+};
+
+// ==== REVERSE MAPPING FOR NUMBER TO NAME ====
+const NUMBER_TO_TYPE = {};
+for (const [name, number] of Object.entries(TYPE_NUMBER)) {
+    NUMBER_TO_TYPE[number] = name;
+}
+
+// ==== SIMPLIFIED DIRECT RENDERER ====
+// ==== FIXED DIRECT RENDERER ====
 function renderMarketplaceDirect(listings) {
     const grid = document.getElementById("nfts-grid");
     if (!grid) {
         console.error("nfts-grid element not found in render!");
         return;
     }
+    
+    console.log("Starting render with", listings.length, "listings");
     
     grid.innerHTML = "";
     
@@ -1102,8 +1474,33 @@ function renderMarketplaceDirect(listings) {
         
         const imageUrl = pokemon.image.hires || pokemon.image.thumbnail || pokemon.image.sprite;
         const pokemonName = pokemon.name.english;
-        const pokemonTypes = pokemon.type.join(' / ').toUpperCase();
+        const pokemonTypes = pokemon.type; // This is array of strings like ['Grass', 'Poison']
         const price = ethers.utils.formatUnits(item.listing.price, 18);
+        
+        console.log(`Rendering ${pokemonName} with types:`, pokemonTypes);
+        
+        // FIXED: Convert type names to numbers for image URLs
+        let typeBadgesHTML = '';
+        if (pokemonTypes && Array.isArray(pokemonTypes)) {
+            typeBadgesHTML = pokemonTypes.map(typeName => {
+                // Convert to lowercase for mapping
+                const lowerType = typeName.toLowerCase();
+                const typeNumber = TYPE_MAPPING[lowerType];
+                
+                console.log(`Converting ${typeName} to number: ${typeNumber}`);
+                
+                if (!typeNumber) {
+                    console.warn(`Unknown type name: ${typeName}`);
+                    return `<span class="type-fallback">${typeName}</span>`;
+                }
+                
+                return `<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-viii/brilliant-diamond-and-shining-pearl/${typeNumber}.png" 
+                          alt="${typeName}" 
+                          class="type-badge"
+                          title="${typeName}"
+                          onerror="this.style.display='none'">`;
+            }).join('');
+        }
         
         return `
             <div class="nft-card">
@@ -1114,7 +1511,9 @@ function renderMarketplaceDirect(listings) {
                 </div>
                 <div class="nft-info">
                     <h3 class="nft-name">${pokemonName}</h3>
-                    <p class="types">${pokemonTypes}</p>
+                    <div class="type-badges-container">
+                        ${typeBadgesHTML || '<span class="type-fallback">No types</span>'}
+                    </div>
                     <p class="nft-price">${price} PKN</p>
                     <p class="nft-owner">Seller: ${item.listing.seller.slice(0, 6)}...${item.listing.seller.slice(-4)}</p>
                 </div>
@@ -1124,7 +1523,7 @@ function renderMarketplaceDirect(listings) {
     }).join('');
     
     grid.innerHTML = cardsHTML;
-    console.log(`Marketplace loaded: ${listings.length} Pokémon`);
+    console.log(`✅ Marketplace loaded: ${listings.length} Pokémon`);
 }
 
 // ==== INSTANT RENDERER ====
@@ -1207,48 +1606,7 @@ function renderMarketplaceWithJSON(listings, pokemonData, grid) {
 }
 
 // ==== RENDER MARKETPLACE GRID ====
-function renderMarketplaceGrid(listedCount) {
-    const grid = document.getElementById("nfts-grid");
-    if (!grid) return;
-    
-    grid.innerHTML = "";
-    
-    console.log(`Rendering ${listedCount} Pokémon in marketplace...`);
-    
-    if (listedCount === 0) {
-        grid.innerHTML = `
-            <div class="no-nfts">
-                <h3>🏪 Marketplace Empty</h3>
-                <p>No Pokémon are currently listed for sale.</p>
-                <p>Be the first to list your Pokémon!</p>
-            </div>`;
-        return;
-    }
-    
-    // Sort by token ID for consistent display
-    listedNFTs.sort((a, b) => a.tokenId - b.tokenId);
-    
-    listedNFTs.forEach(nft => {
-        const card = document.createElement("div");
-        card.className = "nft-card";
-        card.innerHTML = `
-            <div class="nft-image-container">
-                <img src="${nft.image}" alt="${nft.name}" loading="lazy">
-                <div class="nft-rarity">#${nft.pokemonId}</div>
-                <div class="listed-badge">FOR SALE</div>
-            </div>
-            <div class="nft-info">
-                <h3 class="nft-name">${nft.name}</h3>
-                <p class="types">${nft.types}</p>
-                <p class="nft-price">${nft.price} PKN</p>
-            </div>
-            <button class="buy-btn" onclick="buyNFT(${nft.tokenId})">Buy Now</button>
-        `;
-        grid.appendChild(card);
-    });
-    
-    console.log(`Marketplace rendered: ${listedCount} Pokémon`);
-}
+
 
 
 // ==== BUY NFT FUNCTION ====
