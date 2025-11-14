@@ -585,34 +585,32 @@ function generateRandomPokemon(guaranteedRare = false) {
     };
 }
 
-// ==== MINT RANDOM POKEMON ====
-/* --------------  NEW mintRandomPokemon  -------------- */
+/* =================  mintRandomPokemon  ================= */
 async function mintRandomPokemon(count = 1, isFree = false) {
-  console.log(`mintRandomPokemon called | count:${count}  isFree:${isFree}`);
+  console.log(`mintRandomPokemon | count:${count}  isFree:${isFree}`);
 
   if (!nftContract || !window.userAddress) {
     alert("Please connect your wallet first!");
     return;
   }
 
+  /* ---- 1st-single-mint FREE check ---- */
+  const isFirstFree = isFree &&
+                      count === 1 &&
+                      !localStorage.getItem("hasUsedFreeMint");
+
   try {
-    /* ---- decide price ---- */
-    const isFirstFree = isFree && count === 1 && !localStorage.getItem("hasUsedFreeMint");
     const totalPrice = isFirstFree
       ? ethers.BigNumber.from(0)
       : MINT_PRICES[count];
 
-    /* ---- balance check (skip if free) ---- */
+    /* ---- balance / allowance (skip if free) ---- */
     if (!totalPrice.isZero()) {
       const balance = await pknContract.balanceOf(window.userAddress);
       if (balance.lt(totalPrice)) {
         alert(`Insufficient PKN! You need ${ethers.utils.formatUnits(totalPrice, 18)} PKN.`);
         return;
       }
-    }
-
-    /* ---- allowance check (skip if free) ---- */
-    if (!totalPrice.isZero()) {
       const allowance = await pknContract.allowance(window.userAddress, NFT_ADDRESS);
       if (allowance.lt(totalPrice)) {
         const approveTx = await pknContract.approve(NFT_ADDRESS, totalPrice);
@@ -630,7 +628,7 @@ async function mintRandomPokemon(count = 1, isFree = false) {
         rnd = generateRandomPokemon(guaranteedRare && i === 0);
         if (!await nftContract.pokemonMinted(rnd.pokemonId)) break;
         attempts++;
-        if (attempts > 50) {          // emergency fallback
+        if (attempts > 50) { /* emergency fallback */ 
           for (let id = 1; id <= 1025; id++) {
             if (!await nftContract.pokemonMinted(id)) { rnd = { pokemonId: id }; break; }
           }
@@ -643,7 +641,7 @@ async function mintRandomPokemon(count = 1, isFree = false) {
     /* ---- mark free mint used ---- */
     if (isFirstFree) localStorage.setItem("hasUsedFreeMint", "true");
 
-    /* ---- minting animation & tx ---- */
+    /* ---- minting animation + tx ---- */
     showMintingAnimation(pokemonIds);
     await proceedWithMinting(pokemonIds, isFirstFree);   // pass flag down
 
@@ -652,6 +650,7 @@ async function mintRandomPokemon(count = 1, isFree = false) {
     alert("Minting failed: " + (err.reason || err.message));
   }
 }
+/* ======================================================= */
 
 // ==== PRE-MINT DIAGNOSTIC ====
 async function preMintDiagnostic(pokemonIds) {
@@ -793,7 +792,7 @@ function showPlayButton() {
 }
 
 
-// ==== PROCEED WITH MINTING (CORRECTED VERSION) ====
+/* =================  proceedWithMinting  ================= */
 async function proceedWithMinting(pokemonIds, isFirstFree = false) {
   console.log("proceedWithMinting | ids:", pokemonIds, "isFirstFree:", isFirstFree);
 
@@ -820,8 +819,7 @@ async function proceedWithMinting(pokemonIds, isFirstFree = false) {
       const balance = await pknContract.balanceOf(window.userAddress);
       if (balance.lt(totalPrice)) {
         alert(`Insufficient PKN! You need ${ethers.utils.formatUnits(totalPrice, 18)} PKN.`);
-        cleanupFullscreen();
-        return;
+        cleanupFullscreen(); return;
       }
     }
 
@@ -843,7 +841,6 @@ async function proceedWithMinting(pokemonIds, isFirstFree = false) {
       const receipt = await tx.wait();
       results.push({ pokemonId, success: true, txHash: tx.hash });
 
-      // progress update
       if (overlay) {
         const pct = Math.round(((i + 1) / pokemonIds.length) * 100);
         const p = overlay.querySelector('p');
@@ -854,7 +851,7 @@ async function proceedWithMinting(pokemonIds, isFirstFree = false) {
     /* ---- final UI ---- */
     cleanupFullscreen();
     showMintResults(results);
-    updateMintButtons();          // swap to paid button instantly
+    updateMintButtons();          // instantly swap to paid button
     await updatePKNBalance();
     await loadMarketplace();
 
@@ -867,7 +864,7 @@ async function proceedWithMinting(pokemonIds, isFirstFree = false) {
     else alert("Minting failed: " + (err.reason || err.message));
   }
 }
-
+/* ======================================================= */
 
 // ==== SHOW MINT RESULTS ====
 function showMintResults(results) {

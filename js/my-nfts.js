@@ -1,3 +1,7 @@
+/* =====  LOCAL POKéMON JSON CACHE  ===== */
+const typeIconCache = {};
+let pokedexCache = null;          // will hold the entire JSON array
+const JSON_URL   = '/pokemondata/pokedex.json';  
 // my-nfts.js — ENHANCED VERSION WITH MARKETPLACE INTEGRATION
 console.log("my-nfts.js loaded");
 
@@ -36,33 +40,45 @@ const MARKET_ABI = [
 
 // ==== INIT INVENTORY ====
 async function initInventory() {
-    console.log("initInventory called, userAddress:", window.userAddress);
-    
-    if (!window.ethereum || !window.userAddress) {
-        console.log("Wallet not connected");
-        alert("Please connect your wallet first!");
-        return;
-    }
+  console.log("initInventory called, userAddress:", window.userAddress);
 
+  /* 1.  load local JSON ONCE (no wallet needed) */
+  if (!pokedexCache) {
     try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
-
-        nftContract = new ethers.Contract(NFT_ADDRESS, NFT_ABI, signer);
-        pknContract = new ethers.Contract(PKN_ADDRESS, PKN_ABI, signer);
-        marketContract = new ethers.Contract(MARKET_ADDRESS, MARKET_ABI, signer);
-
-        // Update UI
-        updateInventoryUI();
-        await updatePKNBalance();
-        await loadMyNFTs();
-
-    } catch (err) {
-        console.error("Inventory init failed:", err);
-        alert("Failed to initialize: " + err.message);
+      const res = await fetch(JSON_URL);
+      pokedexCache = await res.json();           // full array
+      console.log('✅ Local pokedex loaded:', pokedexCache.length, 'entries');
+    } catch (e) {
+      console.warn('⚠️  local JSON missing, will fall back to PokéAPI');
+      pokedexCache = [];
     }
-}
+  }
 
+  /* 2.  wallet required from here */
+  if (!window.ethereum || !window.userAddress) {
+    console.log("Wallet not connected");
+    alert("Please connect your wallet first!");
+    return;
+  }
+
+  try {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+
+    nftContract = new ethers.Contract(NFT_ADDRESS, NFT_ABI, signer);
+    pknContract = new ethers.Contract(PKN_ADDRESS, PKN_ABI, signer);
+    marketContract = new ethers.Contract(MARKET_ADDRESS, MARKET_ABI, signer);
+
+    /* UI updates */
+    updateInventoryUI();
+    await updatePKNBalance();
+    await loadMyNFTs();
+
+  } catch (err) {
+    console.error("Inventory init failed:", err);
+    alert("Failed to initialize: " + err.message);
+  }
+}
 // ==== UPDATE INVENTORY UI ====
 function updateInventoryUI() {
     if (!window.userAddress) return;
@@ -265,45 +281,32 @@ async function renderNFTsUltraFast(ownedTokens, grid) {
 
 // ==== CREATE NFT CARD (Optimized) ====
 function createNFTCard(nft) {
-    const card = document.createElement("div");
-    card.className = "nft-card";
-    
-    if (nft.listingInfo) {
-        card.innerHTML = `
-            <div class="nft-image-container">
-                <img src="${nft.image}" alt="${nft.name}" loading="lazy">
-                <div class="nft-rarity">#${nft.pokemonId}</div>
-                <div class="listed-badge">LISTED</div>
-            </div>
-            <div class="nft-info">
-                <h3>${nft.name}</h3>
-                <p class="types">${nft.types}</p>
-                <p class="nft-id">Token ID: ${nft.tokenId}</p>
-                <p class="nft-price">Listed for: ${nft.listingInfo.price} PKN</p>
-            </div>
-            <button class="cancel-btn" onclick="cancelListing(${nft.tokenId})">Cancel Listing</button>
-        `;
-    } else {
-        card.innerHTML = `
-            <div class="nft-image-container">
-                <img src="${nft.image}" alt="${nft.name}" loading="lazy">
-                <div class="nft-rarity">#${nft.pokemonId}</div>
-            </div>
-            <div class="nft-info">
-                <h3>${nft.name}</h3>
-                <p class="types">${nft.types}</p>
-                <p class="nft-id">Token ID: ${nft.tokenId}</p>
-            </div>
-            <div class="list-form">
-                <input type="number" id="price-${nft.tokenId}" placeholder="Price in PKN" min="1" value="100">
-                <button class="sell-btn" onclick="listForSale(${nft.tokenId})">List for Sale</button>
-            </div>
-        `;
-    }
-    
-    return card;
-}
+  const card = document.createElement("div");
+  card.className = "nft-card";
 
+  /* ----------  card face (NO input / button)  ---------- */
+  card.innerHTML = `
+      <div class="nft-image-container">
+          <img class="sprite" src="${nft.image}" alt="${nft.name}" loading="lazy">
+          <div class="nft-rarity">#${nft.pokemonId}</div>
+          ${nft.listingInfo?'<div class="listed-badge">LISTED</div>':''}
+      </div>
+
+      <div class="nft-info">
+          <h3>${nft.name}</h3>
+          <p class="types">${Array.isArray(nft.types)?nft.types.join(' / '):nft.types}</p>
+          <p class="nft-id">Token ID: ${nft.tokenId}</p>
+          ${nft.listingInfo?`<p class="nft-price">Listed for: ${nft.listingInfo.price} PKN</p>`:''}
+          <!--  NO list-form here any more -->
+      </div>
+  `;
+
+  /* ----------  click sprite → pop-up panel  ---------- */
+  const img = card.querySelector('.sprite');
+  img.addEventListener('click', () => openPanel(nft));
+
+  return card;
+}
 // ==== NO NFTS MESSAGE ====
 function showNoNFTsMessage(grid) {
     grid.innerHTML = `
@@ -389,24 +392,23 @@ async function renderNFTsGrid(ownedNFTs, grid) {
 
 
 // ==== LIST FOR SALE (ENHANCED) ====
-async function listForSale(tokenId) {
+// ==== LIST FOR SALE (FIXED VERSION) ====
+async function listForSale(tokenId, pricePKN = null) {
+    /* NEW: accept price from panel, fallback to old card input */
+    const price = pricePKN ?? document.getElementById(`price-${tokenId}`)?.value;
+    if (!price || price <= 0) { 
+        alert('Enter a valid price!'); 
+        return; 
+    }
+
     try {
-        const priceInput = document.getElementById(`price-${tokenId}`);
-        if (!priceInput) {
-            alert("Price input not found!");
-            return;
-        }
-        
-        const price = priceInput.value;
-        if (!price || price <= 0) {
-            alert("Please enter a valid price!");
-            return;
-        }
-
         console.log(`Listing token ${tokenId} for ${price} PKN...`);
+        const priceWei = ethers.utils.parseUnits(price.toString(), 18);
 
-        // Check if already approved
+        // FIX 1: Check NFT approval first (not PKN approval)
         const currentApproval = await nftContract.getApproved(tokenId);
+        console.log(`Current NFT approval: ${currentApproval}`);
+        
         if (currentApproval.toLowerCase() !== MARKET_ADDRESS.toLowerCase()) {
             console.log("Approving marketplace for NFT transfer...");
             const approveTx = await nftContract.approve(MARKET_ADDRESS, tokenId);
@@ -414,19 +416,23 @@ async function listForSale(tokenId) {
             console.log("NFT approval confirmed");
         }
 
-        // List in marketplace
-        const priceWei = ethers.utils.parseUnits(price, 18);
+        // FIX 2: Remove PKN approval logic - it's not needed for listing
+        // The marketplace only needs NFT approval to transfer the NFT
+        // PKN approval is only needed when BUYING, not when listing
+
+        /* list token */
+        console.log("Calling marketContract.list...");
         const listTx = await marketContract.list(tokenId, priceWei);
         console.log("Listing transaction sent:", listTx.hash);
         
         await listTx.wait();
         console.log("Listing confirmed!");
 
-        alert(`✅ Pokémon listed successfully for ${price} PKN!`);
-        await loadMyNFTs(); // Refresh the display
+        alert(`✅ Listed for ${price} PKN!`);
+        await loadMyNFTs();   // refresh cards
 
     } catch (err) {
-        console.error("List error:", err);
+        console.error('List error:', err);
         
         if (err.code === 'ACTION_REJECTED') {
             alert("Transaction was rejected by user");
@@ -494,3 +500,137 @@ window.addEventListener('load', function() {
 });
 
 console.log("my-nfts.js initialization complete");
+
+
+async function getPokemonData(id) {
+  const local = pokedexCache.find(p => p.id === id);
+  if (local) return local;                       // use your JSON
+
+  /* fallback to PokéAPI */
+  const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+  if (!res.ok) return null;
+  const api = await res.json();
+  return {
+    id,
+    name: { english: api.name },
+    type: api.types.map(t => t.type.name),
+    base: {
+      HP:  api.stats[0].base_stat,
+      Attack: api.stats[1].base_stat,
+      Defense: api.stats[2].base_stat,
+      Speed: api.stats[5].base_stat
+    },
+    image: {
+      sprite: api.sprites.front_default,
+      hires: api.sprites.other['official-artwork'].front_default
+    }
+  };
+}
+
+
+async function openPanel(nft){
+  const p = document.getElementById('poke-panel');
+
+  /* 1.  get FULL data (local JSON or API) */
+  const data = pokedexCache.find(p => p.id === nft.pokemonId) ?? await getPokemonData(nft.pokemonId);
+  if (!data){ alert('Pokémon data not found'); return; }
+
+  /* 2.  animated sprite (PokéDB CDN) */
+  const engName = (data.name?.english ?? data.name ?? 'Pokémon').toLowerCase();
+  const aniSrc  = `https://img.pokemondb.net/sprites/black-white/anim/normal/${engName}.gif`;
+  const imgEl   = document.getElementById('panel-sprite');
+  imgEl.src = aniSrc;
+  imgEl.onerror = () => { imgEl.src = data.image?.hires ?? nft.image; };
+
+  /* 3.  name & types */
+  document.getElementById('panel-name').textContent  = data.name.english;
+  const typeStr = Array.isArray(data.type) ? data.type.join(' / ') : data.type;
+  /* 3.  type badges (under GIF) */
+    const typeDiv = document.getElementById('panel-types');
+    typeDiv.innerHTML = '';                       // clear old text
+    const typeArr = Array.isArray(data.type) ? data.type : [data.type];
+    typeArr.forEach(t => {
+    const badge = makeTypeBadge(t);
+    typeDiv.appendChild(badge);
+    });
+
+  /* 4.  base stats (YOUR JSON capital keys) */
+  const base = data.base ?? {};
+  setBar('hp',  base.HP      ?? 0, 255);
+  setBar('atk', base.Attack  ?? 0, 255);
+  setBar('def', base.Defense ?? 0, 255);
+  setBar('spd', base.Speed   ?? 0, 255);
+
+  /* 5.  description & profile */
+  const descDiv = document.getElementById('panel-desc');
+  if (!descDiv){ /* create once */
+    document.querySelector('.panel-right').insertAdjacentHTML('beforeend',`
+      <div id="panel-desc" style="margin-top:15px;font-size:13px;color:#aaa;"></div>
+      <div id="panel-profile" style="margin-top:10px;font-size:12px;color:#888;"></div>`);
+  }
+  document.getElementById('panel-desc').textContent = data.description ?? '';
+  const prof = data.profile ?? {};
+  document.getElementById('panel-profile').innerHTML =
+    `Height: ${prof.height ?? '?'}  |  Weight: ${prof.weight ?? '?'}<br>
+     Gender: ${prof.gender ?? '?'}  |  Abilities: ${(prof.ability ?? []).map(a=>a[0]).join(', ')}`;
+
+  /* 6.  action button */
+/* 6.  action button (back inside panel) */
+const actionDiv = document.getElementById('panel-action');
+if (nft.listingInfo){
+  actionDiv.innerHTML = `<button class="cancel-btn" onclick="cancelListing(${nft.tokenId}); closePanel();">Cancel Listing</button>`;
+} else {
+  actionDiv.innerHTML = `
+    <input type="number" id="panel-price" placeholder="Price (PKN)" min="1" value="100">
+    <button class="sell-btn" onclick="listFromPanel(${nft.tokenId});">List for Sale</button>`;
+}
+
+  p.classList.add('show');
+}
+function closePanel(){
+  document.getElementById('poke-panel').classList.remove('show');
+}
+function setBar(stat, value, max){
+  const pct = Math.min(100, (value / max) * 100);
+  document.getElementById('stat-'+stat).style.width = pct + '%';
+}
+async function listFromPanel(tokenId) {
+    const priceInput = document.getElementById('panel-price');
+    if (!priceInput) { 
+        alert('Price input missing'); 
+        return; 
+    }
+
+    const price = priceInput.value.trim();
+    console.log('🔍 price read:', price, 'type:', typeof price);
+    
+    if (!price || isNaN(price) || Number(price) <= 0) {
+        alert('Enter a valid price!');
+        return;
+    }
+
+    // Convert to number to ensure clean data
+    await listForSale(tokenId, Number(price));
+    closePanel();
+}
+/* English name → official number file */
+const TYPE_NUMBER = {
+  normal:1, fighting:2, flying:3, poison:4, ground:5, rock:6, bug:7, ghost:8,
+  steel:9, fire:10, water:11, grass:12, electric:13, psychic:14, ice:15,
+  dragon:16, dark:17, fairy:18
+};
+
+function makeTypeBadge(typeName){
+  if (typeIconCache[typeName]) return typeIconCache[typeName];
+
+  const num = TYPE_NUMBER[typeName.toLowerCase()];
+  if (!num){ console.warn('Unknown type', typeName); return document.createElement('span'); }
+
+  const img = new Image();
+  img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-viii/brilliant-diamond-and-shining-pearl/${num}.png`;
+  img.className = 'type-badge';
+  img.alt = typeName;
+  img.onerror = () => { img.remove(); };
+  typeIconCache[typeName] = img;
+  return img;
+}

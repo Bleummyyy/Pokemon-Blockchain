@@ -41,7 +41,10 @@ async function login() {
     } else {
       // STEP 2: Load fresh Pokémon data with progress
       console.log("🔄 Fetching fresh Pokémon data...");
-      await loadAllPokemonData();
+      // Pre-load ONLY if we are already on marketplace.html
+if (window.location.pathname.includes("marketplace")) {
+  await loadAllPokemonData();
+}
       hidePokemonLoading();
       completeLogin();
     }

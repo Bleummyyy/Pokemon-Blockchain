@@ -72,6 +72,32 @@
     </div>
   </div>
 
+  <!-- =====  Pokémon DETAIL SIDE-PANEL  ===== -->
+<div id="poke-panel" class="poke-side-panel">
+  <div class="poke-panel-inner">
+    <button class="close-panel" onclick="closePanel()">×</button>
+
+    <!-- LEFT -->
+    <div class="panel-left">
+      <img id="panel-sprite" src="" alt="sprite">
+      <div id="panel-types" class="panel-types"></div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="panel-right">
+      <h2 id="panel-name"></h2>
+
+      <div class="stat-bar"><label>HP</label><div class="bar"><div id="stat-hp" class="bar-fill"></div></div></div>
+      <div class="stat-bar"><label>ATK</label><div class="bar"><div id="stat-atk" class="bar-fill"></div></div></div>
+      <div class="stat-bar"><label>DEF</label><div class="bar"><div id="stat-def" class="bar-fill"></div></div></div>
+      <div class="stat-bar"><label>SPD</label><div class="bar"><div id="stat-spd" class="bar-fill"></div></div></div>
+
+      <!-- DYNAMIC BUTTON -->
+      <div id="panel-action"></div>
+    </div>
+  </div>
+</div>
+
   <!-- SINGLE SCRIPT SECTION -->
   <script>
     // Connect login button

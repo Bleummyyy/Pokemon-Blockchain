@@ -713,3 +713,76 @@ body {
 
 
 /*POP UP UI*/
+/* =====  CENTER RECTANGLE POP-UP  ===== */
+.poke-side-panel{
+  position:fixed; inset:0;                                /* full viewport */
+  background:rgba(10,10,26,.75); backdrop-filter:blur(4px);
+  display:flex; align-items:center; justify-content:center;
+  z-index:9999; opacity:0; pointer-events:none;
+  transition:opacity .3s ease;
+}
+.poke-side-panel.show{ opacity:1; pointer-events:auto; }
+
+.poke-panel-inner{
+  width:90%; max-width:520px; background:#1a1a2e;
+  border:2px solid #00d1ff; border-radius:16px;
+  padding:25px 30px; display:flex; gap:25px;
+  box-shadow:0 0 30px rgba(0,209,255,.5);
+  position:relative;
+}
+
+.close-panel{ position:absolute; top:10px; right:15px; background:none; border:none;
+              font-size:28px; color:#00d1ff; cursor:pointer; line-height:1; }
+
+.panel-left{
+  display:flex;
+  flex-direction:column;   /* stack vertically */
+  align-items:center;      /* centre horizontally */
+  justify-content:center;  /* centre vertically */
+  gap:8px;                 /* space between gif and text */
+  min-height:220px;
+}
+.panel-left img{ width:180px; image-rendering:pixelated; }
+.panel-types{ margin-top:6px; font-size:14px; letter-spacing:1px; color:#aaa; }
+
+.panel-right{
+  display:flex;
+  flex-direction:column;
+  height:50%;                    /* exactly half panel */
+  min-height:110px;              /* never smaller than 110 px */
+  justify-content:space-between; /* bars spread evenly */
+}
+
+.stat-bar{ margin:2px 0; } 
+.panel-right h2{ margin-bottom:15px; font-size:24px; color:#00d1ff; text-shadow:0 0 12px rgba(0,209,255,.6); }
+
+.stat-bar{ margin:10px 0; }
+.stat-bar label{ display:block; font-size:12px; margin-bottom:3px; color:#aaa; }
+.bar{ height:10px; background:#222; border-radius:5px; overflow:hidden; }
+.bar-fill{ height:100%; background:linear-gradient(90deg,#00d1ff,#ff6b35); width:0%;
+           transition:width .8s ease-out; }
+
+#panel-action{ margin-top:20px; }
+#panel-action input{ width:100%; padding:8px 12px; border:1px solid #333; border-radius:8px;
+                     background:rgba(255,255,255,.9); color:#000; font-size:14px; text-align:center; margin-bottom:10px; }
+#panel-action button{ width:100%; }
+
+/* =====  WIDER PANEL  ===== */
+.poke-panel-inner{
+  max-width:720px;       /* was 520px */
+  width:95%;             /* leave breathing room */
+  gap:35px;              /* more space between gif & stats */
+}
+
+/* mobile keeps full width */
+@media (max-width:768px){
+  .poke-panel-inner{ gap:25px; }
+}
+
+/* =====  TYPE BADGES  ===== */
+.type-badge{
+  width:24px; height:24px; object-fit:contain; 
+  margin-top: 10px; filter:drop-shadow(0 0 2px #000);
+  
+}
+.panel-types{ gap:4px; justify-content:center; margin-top:15px; margin-left: 25px; }
