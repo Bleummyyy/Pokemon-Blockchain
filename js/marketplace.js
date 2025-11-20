@@ -622,47 +622,170 @@ function generateRandomPokemon(guaranteedRare = false) {
 }
 
 /* =================  mintRandomPokemon  ================= */
-// ==== ULTRA-RELIABLE MINTING SYSTEM ====
+// ==== UPDATED MAIN MINT FUNCTION ====
 async function mintRandomPokemon(count = 1, isFree = false) {
-  console.log(`mintRandomPokemon | count:${count}  isFree:${isFree}`);
+    console.log(`🎯 mintRandomPokemon | count:${count} isFree:${isFree}`);
 
-  if (!nftContract || !window.userAddress) {
-    alert("Please connect your wallet first!");
-    return;
-  }
+    if (!nftContract || !window.userAddress) {
+        alert("Please connect your wallet first!");
+        return;
+    }
 
-  // Generate Pokémon IDs first
-  const pokemonIds = [];
-  const guaranteedRare = count === 10;
-  
-  for (let i = 0; i < count; i++) {
-    let rnd;
-    let attempts = 0;
-    do {
-      rnd = generateRandomPokemon(guaranteedRare && i === 0);
-      if (!await nftContract.pokemonMinted(rnd.pokemonId)) break;
-      attempts++;
-      if (attempts > 50) {
-        // Emergency fallback: find any unminted Pokémon
-        for (let id = 1; id <= 1025; id++) {
-          if (!await nftContract.pokemonMinted(id)) {
-            rnd = { pokemonId: id };
-            break;
-          }
+    // Generate unique Pokémon IDs
+    const pokemonIds = [];
+    const guaranteedRare = count === 10;
+    
+    for (let i = 0; i < count; i++) {
+        let pokemonData;
+        let attempts = 0;
+        
+        do {
+            pokemonData = generateRandomPokemon(guaranteedRare && i === 0);
+            const isMinted = await nftContract.pokemonMinted(pokemonData.pokemonId);
+            if (!isMinted) break;
+            
+            attempts++;
+            if (attempts > 50) {
+                // Find any unminted Pokémon
+                for (let id = 1; id <= 1025; id++) {
+                    if (!await nftContract.pokemonMinted(id)) {
+                        pokemonData = { pokemonId: id };
+                        break;
+                    }
+                }
+                break;
+            }
+        } while (true);
+        
+        pokemonIds.push(pokemonData.pokemonId);
+    }
+
+    console.log("Generated Pokémon IDs:", pokemonIds);
+
+    // Show animation
+    showMintingAnimation(pokemonIds);
+    
+    // Use SUPER SAFE minting
+    await superSafeMint(pokemonIds, isFree);
+}
+
+// ==== SUPER SAFE MINT FUNCTION ====
+async function superSafeMint(pokemonIds, isFirstFree = false) {
+    console.log("🛡️ SUPER SAFE MINT STARTING...");
+    
+    const results = [];
+    
+    for (let i = 0; i < pokemonIds.length; i++) {
+        const pokemonId = pokemonIds[i];
+        
+        console.log(`\n🎯 Processing Pokémon #${pokemonId} (${i+1}/${pokemonIds.length})`);
+        
+        // STEP 1: Pre-check
+        const preCheck = await preMintCheck(pokemonId);
+        if (!preCheck.canMint) {
+            results.push({ pokemonId, success: false, error: preCheck.error });
+            continue;
         }
-        break;
-      }
-    } while (true);
-    pokemonIds.push(rnd.pokemonId);
-  }
 
-  console.log("Generated Pokémon IDs:", pokemonIds);
+        // STEP 2: Attempt mint with detailed debugging
+        const debugResult = await debugMintProcess(pokemonId);
+        
+        // STEP 3: Final verification (wait longer)
+        await new Promise(resolve => setTimeout(resolve, 8000)); // Wait 8 seconds
+        
+        const finalCheck = await verifyFinalState(pokemonId);
+        
+        if (finalCheck.owned) {
+            console.log(`🎉 CONFIRMED: Pokémon #${pokemonId} is DEFINITELY in your inventory!`);
+            results.push({ pokemonId, success: true, confirmed: true });
+        } else if (finalCheck.mintedButNotOwned) {
+            console.log(`⚠️  Pokémon #${pokemonId} was minted but you don't own it!`);
+            results.push({ pokemonId, success: false, error: "Minted but not owned" });
+        } else {
+            console.log(`❌ Pokémon #${pokemonId} was not minted at all`);
+            results.push({ pokemonId, success: false, error: "Not minted" });
+        }
+        
+        updateMintProgress(i + 1, pokemonIds.length);
+    }
+    
+    showSuperSafeResults(results);
+    return results;
+}
 
-  // Show animation
-  showMintingAnimation(pokemonIds);
-  
-  // Use the new reliable minting approach
-  await reliableBatchMint(pokemonIds, isFree);
+// ==== PRE-MINT CHECK ====
+async function preMintCheck(pokemonId) {
+    try {
+        // Check if already minted
+        const isMinted = await nftContract.pokemonMinted(pokemonId);
+        if (isMinted) {
+            const owner = await nftContract.ownerOf(pokemonId);
+            if (owner.toLowerCase() === window.userAddress.toLowerCase()) {
+                return { canMint: false, error: "You already own this Pokémon" };
+            }
+            return { canMint: false, error: "Pokémon already minted by someone else" };
+        }
+        
+        return { canMint: true };
+    } catch (error) {
+        return { canMint: false, error: error.message };
+    }
+}
+
+// ==== FINAL STATE VERIFICATION ====
+async function verifyFinalState(pokemonId) {
+    try {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        const isMinted = await nftContract.pokemonMinted(pokemonId);
+        if (!isMinted) {
+            return { owned: false, mintedButNotOwned: false };
+        }
+        
+        const owner = await nftContract.ownerOf(pokemonId);
+        const youOwnIt = owner.toLowerCase() === window.userAddress.toLowerCase();
+        
+        return { 
+            owned: youOwnIt, 
+            mintedButNotOwned: isMinted && !youOwnIt 
+        };
+    } catch (error) {
+        return { owned: false, mintedButNotOwned: false, error: error.message };
+    }
+}
+
+// ==== SUPER SAFE RESULTS ====
+function showSuperSafeResults(results) {
+    const successCount = results.filter(r => r.success).length;
+    const failedCount = results.filter(r => !r.success).length;
+    
+    console.log("📊 SUPER SAFE RESULTS:", results);
+    
+    let message = "";
+    
+    if (successCount === results.length) {
+        message = `🎉 PERFECT! All ${successCount} Pokémon are confirmed in your inventory!`;
+    } else if (successCount > 0) {
+        message = `✅ ${successCount} Pokémon successfully minted!\n❌ ${failedCount} failed.`;
+        
+        // Show details of failures
+        results.filter(r => !r.success).forEach(fail => {
+            console.log(`   ❌ #${fail.pokemonId}: ${fail.error}`);
+        });
+    } else {
+        message = `❌ All ${failedCount} mints failed. Check console for details.`;
+    }
+    
+    alert(message);
+    
+    // Always show detailed results in console
+    results.forEach(result => {
+        if (result.success) {
+            console.log(`✅ #${result.pokemonId}: SUCCESS - Confirmed in inventory`);
+        } else {
+            console.log(`❌ #${result.pokemonId}: FAILED - ${result.error}`);
+        }
+    });
 }
 
 // ==== RELIABLE BATCH MINTING ====

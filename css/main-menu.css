@@ -1,0 +1,345 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* Button Sizes - SMALLER */
+    --button-width: clamp(80px, 10vw, 100px);
+    --button-height: auto;
+    --button-padding: 1.5vh 1vw;
+    
+    /* Icon Sizes - SMALLER */
+    --icon-size: 3.5vh;
+    --icon-font-size: clamp(16px, 1.8vw, 22px);
+    
+    /* Label Sizes - SMALLER */
+    --label-font-size: clamp(10px, 1.1vw, 14px);
+    --label-margin-top: 0.5vh;
+    
+    /* Profile Sizes - SMALLER */
+    --profile-card-width: clamp(120px, 14vw, 160px);
+    --profile-card-padding: 1.2vh 1.5vw;
+    --name-font-size: clamp(14px, 1.6vw, 20px);
+    
+    /* Energy Indicator - EVEN SMALLER */
+    --energy-font-size: clamp(10px, 1.1vw, 14px);
+    --energy-padding: 0.8vh 1.2vw;
+}
+
+body {
+    font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', sans-serif;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+}
+
+.game-container {
+    width: 100%;
+    height: 100%;
+    background-color: #A8D8E8;
+    background-image: url('../assets/images/background-battle.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Top Bar */
+.top-bar {
+    position: absolute;
+    top: 1.5%;
+    left: 1.5%;
+    right: 1.5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    z-index: 100;
+}
+
+.player-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1vh;
+}
+
+.player-card {
+    background: linear-gradient(135deg, #D2691E, #CD853F);
+    padding: var(--profile-card-padding);
+    border-radius: 20px;
+    border: 0.3vh solid #8B4513;
+    box-shadow: 0 0.4vh 1vh rgba(0,0,0,0.3);
+    position: relative;
+    width: var(--profile-card-width);
+}
+
+.player-card::before {
+    content: '';
+    position: absolute;
+    top: -0.2vh;
+    left: -0.2vh;
+    right: -0.2vh;
+    bottom: -0.2vh;
+    background: linear-gradient(135deg, #F4A460, #DEB887);
+    border-radius: 20px;
+    z-index: -1;
+}
+
+.player-name {
+    color: white;
+    font-size: var(--name-font-size);
+    font-weight: bold;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.energy-indicator {
+    background: rgba(139, 69, 19, 0.9);
+    padding: var(--energy-padding);
+    border-radius: 12px; /* Smaller radius */
+    border: 0.2vh solid #654321;
+    display: flex;
+    align-items: center;
+    gap: 0.6vw; /* Smaller gap */
+    width: fit-content;
+}
+
+.energy-icon {
+    font-size: var(--energy-font-size);
+}
+
+.energy-text {
+    color: white;
+    font-weight: bold;
+    font-size: var(--energy-font-size);
+}
+
+.energy-label {
+    margin-left: 0.6vw; /* Smaller margin */
+}
+
+.leaderboard-btn {
+    background: linear-gradient(135deg, #556B2F, #6B8E23);
+    padding: 1.2vh 2vw;
+    border-radius: 15px;
+    border: 0.3vh solid #3E5016;
+    cursor: pointer;
+    box-shadow: 0 0.4vh 1vh rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    gap: 0.8vw;
+    transition: transform 0.2s;
+}
+
+.leaderboard-btn:hover {
+    transform: scale(1.05);
+}
+
+.leaderboard-icon {
+    width: 2.8vh; /* Slightly smaller icon */
+    background-image: url('../assets/images/leaderboard.png');
+    height: 2.8vh;
+    border-radius: 50%;
+}
+
+.leaderboard-text {
+    color: white;
+    font-weight: bold;
+    font-size: clamp(10px, 1.1vw, 14px); /* Slightly smaller font */
+}
+
+/* Bottom Menu Buttons - SMALLER */
+.bottom-menu {
+    margin-left: 10px;
+    position: absolute;
+    bottom: 2%;
+    left: 1.5%;
+    display: flex;
+    gap: 1.5vw;
+    z-index: 100;
+}
+
+.menu-button {
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #CD853F, #D2691E);
+    width: var(--button-width);
+    padding: var(--button-padding);
+    border-radius: 15px;
+    border: 0.3vh solid #8B4513;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0.4vh 1vh rgba(0,0,0,0.4);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--button-height);
+}
+
+.menu-button::before {
+    content: '';
+    position: absolute;
+    inset: -0.2vh;
+    background: linear-gradient(135deg, #DEB887, #F4A460);
+    border-radius: 15px;
+    z-index: -1;
+}
+
+.menu-button:hover {
+    transform: translateY(-0.3vh) scale(1.05);
+}
+
+.menu-icon {
+    width: var(--icon-size);
+    height: var(--icon-size);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--icon-font-size);
+    transition: transform 0.3s ease;
+}
+
+.menu-button:hover .menu-icon {
+    transform: scale(1.1);
+}
+
+.menu-label {
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    margin-top: 8px;
+}
+
+/* Right Panel - ADJUSTED POSITION */
+.right-panel {
+    position: absolute;
+    right: 1.5%;
+    bottom: 2%; /* Changed from top: 50% to bottom: 2% */
+    transform: none; /* Removed translateY since we're using bottom positioning */
+    display: flex;
+    flex-direction: column;
+    gap: 1.5vh;
+    z-index: 100;
+}
+
+.action-buttons {
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2vh;
+}
+
+.action-btn {
+    margin-bottom: 8px;
+    padding: 1.8vh 3vw;
+    border-radius: 15px;
+    border: 0.4vh solid;
+    cursor: pointer;
+    transition: transform 0.2s;
+    box-shadow: 0 0.4vh 1vh rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    gap: 1.2vw;
+    font-size: clamp(14px, 1.6vw, 20px);
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.action-btn:hover {
+    transform: scale(1.05);
+}
+
+.adventure-btn {
+    background: linear-gradient(135deg, #3498DB, #5DADE2);
+    border-color: #2471A3;
+    color: white;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+.arena-btn {
+    background: linear-gradient(135deg, #F39C12, #F4D03F);
+    border-color: #D68910;
+    color: white;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+.btn-icon {
+    font-size: clamp(16px, 2vw, 26px);
+}
+
+/* Media Queries for Responsive Design */
+@media (max-width: 768px) {
+    :root {
+        --button-width: 70px;
+        --icon-size: 3vh;
+        --label-font-size: 9px;
+        --profile-card-width: 100px;
+        --name-font-size: 12px;
+        --energy-font-size: 9px;
+        --energy-padding: 0.6vh 1vw;
+    }
+    
+    .top-bar {
+        flex-direction: column;
+        gap: 1.5vh;
+        align-items: flex-start;
+    }
+    
+    .right-panel {
+        position: relative;
+        bottom: auto;
+        right: auto;
+        margin: 1.5vh auto;
+        align-items: center;
+        width: 90%;
+    }
+    
+    .bottom-menu {
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 90%;
+        left: 5%;
+        gap: 2vw;
+    }
+    
+    .action-buttons {
+        width: 100%;
+    }
+    
+    .action-btn {
+        justify-content: center;
+        padding: 1.5vh 2vw;
+    }
+}
+
+@media (max-height: 600px) {
+    :root {
+        --button-padding: 1vh 0.8vw;
+        --icon-size: 3vh;
+        --label-font-size: 9px;
+        --profile-card-padding: 0.8vh 1vw;
+        --energy-padding: 0.6vh 1vw;
+    }
+    
+    .top-bar {
+        top: 1%;
+    }
+    
+    .bottom-menu {
+        bottom: 1%;
+    }
+    
+    .right-panel {
+        bottom: 1%;
+    }
+}
