@@ -124,10 +124,10 @@ body {
 }
 
 .leaderboard-btn {
-    background: linear-gradient(135deg, #556B2F, #6B8E23);
+    background: linear-gradient(135deg, #CD853F, #D2691E);
     padding: 1.2vh 2vw;
     border-radius: 15px;
-    border: 0.3vh solid #3E5016;
+    border: 2px solid #8B4513;
     cursor: pointer;
     box-shadow: 0 0.4vh 1vh rgba(0,0,0,0.3);
     display: flex;
@@ -163,6 +163,7 @@ body {
     gap: 1.5vw;
     z-index: 100;
 }
+
 
 .menu-button {
     margin-bottom: 10px;
@@ -343,3 +344,189 @@ body {
         bottom: 1%;
     }
 }
+
+#pokemon-display {
+  position: absolute;
+  top: 65%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: none;          /* transparent */
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  z-index: 200;
+}
+
+#pokemon-display img {  
+  width: 220px;
+  height: 220px;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* ---------- centred floating panel ---------- */
+/* ---------- centred floating panel ---------- */
+#pokemon-panel {
+  position: fixed;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: 90vw;
+  max-width: 800px;
+  height: 80vh;
+  max-height: 600px;
+  background: linear-gradient(135deg, #CD853F, #D2691E);
+  border: 2px solid #8B4513;
+  border-radius: 16px;
+  padding: 20px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+#pokemon-panel.hidden {
+  display: none;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  font-size: 1.4rem;
+}
+
+#close-panel-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+#pokemon-grid {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+  padding-right: 8px;
+}
+
+#pokemon-grid img {
+  width: 100%;
+  image-rendering: pixelated;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+#pokemon-grid img:hover {
+  transform: scale(1.1);
+}
+/* ---- sprite grid ---- */
+.pokemon-grid {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+  padding-right: 8px; /* scrollbar spacing */
+}
+.pokemon-grid img {
+  width: 100%;
+  image-rendering: pixelated;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.pokemon-grid img:hover {
+  transform: scale(1.1);
+}
+
+/* ---------- each Pokémon tile ---------- */
+.pokemon-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  background: rgba(30, 30, 30, 0.95);
+  border: 2px solid white;
+  border-radius: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  height: 150px;          /* exact tile height */
+  overflow: hidden;      /* crop if needed */
+}
+
+.pokemon-tile img {
+  max-height: 100px;      /* shrink image to fit */
+  width: auto;
+  image-rendering: pixelated;
+  border-radius: 4px;
+}
+
+.pokemon-tile .name {
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1;
+}
+
+.pokemon-tile .types {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+}
+
+.pokemon-tile .type-badge {
+  height: 10px;          /* smaller badges */
+  image-rendering: pixelated;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #666;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 2rem auto;
+  display: block;
+}
+
+#pokemon-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 200px;
+  align-items: center;
+}
+
+
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-container p {
+  margin: 0.5rem 0;
+  font-size: 1.1rem;
+}
+
+.loading-container small {
+  font-size: 0.9rem;
+  color: #888;
+}
+

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Axie Style Battle UI</title>
+
+    <link rel="stylesheet" href="css/battle-tournament.css" />
+</head>
+
+<body>
+<div class="game-container">
+
+    <!-- TOP BAR -->
+    <header class="top-bar">
+        <div class="round-counter">Round 1</div>
+    </header>
+
+    <!-- BATTLE ARENA -->
+    <main class="battle-arena">
+
+        <!-- PLAYER -->
+        <section class="character player">
+            <div class="status-bars">
+                <div class="health-bar-container">
+                    <div class="health-bar-fill" style="width:85%">85%</div>
+                </div>
+            </div>
+
+            <div class="axie-avatar" id="playerPokemon">
+                <img src="" alt="Player Pokémon">
+            </div>
+        </section>
+
+        <!-- ENEMY -->
+        <section class="character enemy">
+            <div class="status-bars">
+                <div class="health-bar-container">
+                    <div class="health-bar-fill" style="width:80%">80%</div>
+                </div>
+            </div>
+
+            <div class="axie-avatar" id="opponentPokemon">
+                <img src="" alt="Enemy Pokémon">
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FLOATING UI -->
+    <div class="floating-ui">
+        <div class="energy-display">
+            ⚡ <span>2 / 10</span>
+        </div>
+        <button id="endTurnBtn" class="end-turn-button">End Turn</button>
+    </div>
+
+    <!-- STACK -->
+    <div class="stacked-area">
+        <div id="stackedCards" class="stacked-cards-container"></div>
+        <div class="stack-counter">Stack: <span id="stackCount">0</span></div>
+    </div>
+
+    <!-- ACTION BAR -->
+    <footer class="action-bar">
+        <div class="card-hand">
+            <div class="axie-card"><img src="assets/images/cards/attack.png"></div>
+            <div class="axie-card"><img src="assets/images/cards/element.png"></div>
+            <div class="axie-card"><img src="assets/images/cards/heal.png"></div>
+            <div class="axie-card"><img src="assets/images/cards/stolemovement.png"></div>
+        </div>
+    </footer>
+
+</div>
+
+<!-- IMPORTANT ORDER -->
+<script src="js/ethers.js"></script>
+<script src="js/battle-tournament.js"></script>
+</body>
+</html>

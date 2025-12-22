@@ -1,4 +1,12 @@
-// marketplace.js - FIXED VERSION (no totalSupply dependency)
+
+function saveWalletSession() {
+  if (window.userAddress) {
+    sessionStorage.setItem("walletConnected", "true");
+    sessionStorage.setItem("userAddress", window.userAddress);
+    console.log("✅ Wallet session saved:", window.userAddress);
+  }
+}
+
 // ==== LOAD PROTECTION ====
 let isLoadingMarketplace = false;
 let hasLoadedMarketplace = false;
@@ -119,6 +127,9 @@ async function initMarketplace() {
 // ==== UPDATE MARKETPLACE UI ====
 function updateMarketplaceUI() {
     if (!window.userAddress) return;
+
+    // ALWAYS save when marketplace loads
+    saveWalletSession();
     
     // Update wallet info in navbar
     const addressElement = document.getElementById("address");
@@ -138,6 +149,7 @@ function updateMarketplaceUI() {
     if (pknBalance) {
         pknBalance.style.display = "block";
     }
+    
 }
 
 
@@ -537,13 +549,14 @@ function renderFilteredNFTs(nfts) {
                 <h3 class="nft-name">${nft.name}</h3>
                 <p class="types">${nft.types}</p>
                 <p class="nft-price">${nft.price} PKN</p>
-                <p class="nft-owner">Owner: ${nft.owner.slice(0, 6)}...${nft.owner.slice(-4)}</p>
             </div>
             <button class="buy-btn" onclick="buyNFT(${nft.tokenId}, '${nft.price}')">Buy Now</button>
         `;
         grid.appendChild(card);
     });
 }
+
+// <p class="nft-owner">Owner: ${nft.owner.slice(0, 6)}...${nft.owner.slice(-4)}</p> 
 
 // Global functions
 window.buyNFT = buyNFT;
@@ -1111,24 +1124,24 @@ function cleanupFullscreen() {
 }
 
 // ==== SHOW PLAY BUTTON IF AUTOPLAY BLOCKED ====
-function showPlayButton() {
-    const playBtn = document.createElement('button');
-    playBtn.id = 'play-video-btn';
-    playBtn.className = 'play-video-btn';
-    playBtn.innerHTML = '▶️ Play Animation';
-    playBtn.onclick = function() {
-        const video = document.getElementById('gacha-video');
-        if (video) {
-            video.play();
-            playBtn.remove();
-        }
-    };
+// function showPlayButton() {
+//     const playBtn = document.createElement('button');
+//     playBtn.id = 'play-video-btn';
+//     playBtn.className = 'play-video-btn';
+//     playBtn.innerHTML = '▶️ Play Animation';
+//     playBtn.onclick = function() {
+//         const video = document.getElementById('gacha-video');
+//         if (video) {
+//             video.play();
+//             playBtn.remove();
+//         }
+//     };
     
-    const overlayContent = document.querySelector('.video-overlay-content');
-    if (overContent) {
-        overlayContent.appendChild(playBtn);
-    }
-}
+//     const overlayContent = document.querySelector('.video-overlay-content');
+//     if (overContent) {
+//         overlayContent.appendChild(playBtn);
+//     }
+// }
 
 
 /* =================  proceedWithMinting  ================= */
@@ -1638,7 +1651,7 @@ function renderMarketplaceDirect(listings) {
                         ${typeBadgesHTML || '<span class="type-fallback">No types</span>'}
                     </div>
                     <p class="nft-price">${price} PKN</p>
-                    <p class="nft-owner">Seller: ${item.listing.seller.slice(0, 6)}...${item.listing.seller.slice(-4)}</p>
+                    
                 </div>
                 <button class="buy-btn" onclick="buyListedNFT(${item.tokenId})">Buy Now</button>
             </div>
@@ -1648,7 +1661,7 @@ function renderMarketplaceDirect(listings) {
     grid.innerHTML = cardsHTML;
     console.log(`✅ Marketplace loaded: ${listings.length} Pokémon`);
 }
-
+//<p class="nft-owner">Seller: ${item.listing.seller.slice(0, 6)}...${item.listing.seller.slice(-4)}</p>
 // ==== INSTANT RENDERER ====
 // ==== INSTANT RENDERER WITH FALLBACKS ====
 function renderMarketplaceWithJSON(listings, grid) {
@@ -1808,4 +1821,9 @@ function decodeContractError(errorData) {
     }
     
     return errorSelectors[selector] || 'Unknown error';
+}
+
+if (window.ethereum && window.ethereum.selectedAddress) {
+  sessionStorage.setItem("walletConnected", "true");
+  sessionStorage.setItem("userAddress", window.ethereum.selectedAddress);
 }

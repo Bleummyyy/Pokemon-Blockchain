@@ -1,62 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Axie Adventure</title>
-    <link rel="stylesheet" href="css/main-menu.css"/>
+  <meta charset="UTF-8" />
+  <title>Axie Adventure – Main Menu</title>
+  <link rel="stylesheet" href="css/main-menu.css" />
 </head>
+
 <body>
-    <div class="game-container">
-        <!-- Top Bar -->
-        <div class="top-bar">
-            <div class="player-info">
-                <div class="player-card">
-                    <div class="player-name">Bleum</div>
-                </div>
-                <div class="energy-indicator">
-                    <span class="energy-icon">⚡</span>
-                    <span class="energy-text">20/20</span>
-                    <span class="energy-text energy-label">Energy!</span>
-                </div>
-            </div>
-
-            <div class="leaderboard-btn">
-                <div class="leaderboard-icon"></div>
-                <span class="leaderboard-text">LeaderBoard</span>
-            </div>
+  <div class="game-container">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="player-info">
+        <div class="player-card">
+          <div class="player-name">Bleum</div>
         </div>
-
-        <!-- Bottom Menu Buttons -->
-        <div class="bottom-menu">
-            <div class="menu-button">
-                <div class="menu-icon">🐾</div>
-                <div class="menu-label">Pokemon</div>
-            </div>
-            <div class="menu-button">
-                <div class="menu-icon">👥</div>
-                <div class="menu-label">Teams</div>
-            </div>
-            <div class="menu-button">
-                <div class="menu-icon">📦</div>
-                <div class="menu-label">Inventory</div>
-            </div>
+        <div class="energy-indicator">
+          <span class="energy-icon">⚡</span>
+          <span class="energy-text">20/20</span>
+          <span class="energy-text energy-label">Energy!</span>
         </div>
+      </div>
 
-        <!-- Right Panel -->
-        <div class="right-panel">
-            <div class="action-buttons">
-                <div class="action-btn adventure-btn">
-                    <span class="btn-icon">▶</span>
-                    <span>Adventure</span>
-                </div>
-                <div class="action-btn arena-btn">
-                    <span class="btn-icon">⚔</span>
-                    <span>Arena</span>
-                </div>
-            </div>
-        </div>
-
+      <div class="leaderboard-btn">
+        <div class="leaderboard-icon"></div>
+        <span class="leaderboard-text">LeaderBoard</span>
+      </div>
     </div>
+
+    <!-- Pokémon Display (centre of screen) -->
+    <div id="pokemon-display" class="pokemon-card centered"></div>
+
+    <!-- Bottom Menu Buttons -->
+    <div class="bottom-menu">
+      <div class="menu-button" id="choose-pokemon-btn">
+        <div class="menu-icon">🐾</div>
+        <div class="menu-label">Pokemon</div>
+      </div>
+      <div class="menu-button">
+        <div class="menu-icon">👥</div>
+        <div class="menu-label">Teams</div>
+      </div>
+      <div class="menu-button">
+        <div class="menu-icon">📦</div>
+        <div class="menu-label">Inventory</div>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right-panel">
+      <div class="action-buttons">
+        <div class="action-btn adventure-btn">
+          <span class="btn-icon">▶</span>
+          <span>Adventure</span>
+        </div>
+        <div class="action-btn arena-btn" onclick="enterArena()">
+          <span class="btn-icon">⚔</span>
+          <span>Arena</span>
+        </div>
+      </div>
+    </div>
+
+
+  <!-- ===== CHOOSE-POKÉMON UI (inside game-container) ===== -->
+
+  <div id="pokemon-panel" class="floating-panel hidden">
+    <div class="panel-header">
+      <span>Your Pokémon</span>
+      <button id="close-panel-btn">&times;</button>
+    </div>
+    <div id="pokemon-grid" class="pokemon-grid"></div>
+  </div>
+</div> <!-- close game-container -->
+
+<!-- scripts stay at the bottom -->
+<script src="js/ethers.js"></script>
+<script src="js/main-menu.js"></script>
+</body>
+  <!-- Scripts -->
+  <script src="js/ethers.js"></script>
+  <script src="js/main-menu.js"></script>
 </body>
 </html>
