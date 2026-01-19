@@ -160,8 +160,8 @@ body {
 -----------------------------------------*/
 .stacked-area {
     position: absolute;
-    bottom: 300px;
-    left: 50%;
+    bottom: 630px;
+    left: 45%;
     transform: translateX(-50%);
     width: 200px;
     display: flex;
@@ -179,13 +179,13 @@ body {
 }
 
 .stacked-card {
-    position: absolute;
-    width: 90px;
-    height: 130px;
-    border-radius: 12px;
+    position: ab0te;
+    width: 45px;
+    height: 65px;
+
     box-shadow: 0 4px 15px rgba(0,0,0,.3);
     transition: all .3s ease;
-    border: 2px solid rgba(255,255,255,.3);
+
     overflow: hidden;
 }
 
@@ -286,6 +286,7 @@ body {
    ACTION BAR
 -----------------------------------------*/
 .action-bar {
+    min-height: 150px;   /* keeps footer visible */
     border: 4px solid #8B4513;
     background: rgba(255,255,255,.95);
     padding: 8px 40px;
@@ -296,6 +297,7 @@ body {
 }
 
 .card-hand {
+    min-height: 110px;   /* keeps card area open */
     display: flex;
     gap: 3px;
     justify-content: center;
@@ -356,6 +358,8 @@ body {
 /* ----------------------------------------
    BATTLE ANIMATIONS
 -----------------------------------------*/
+
+
 .battle-effect {
     position: absolute;
     pointer-events: none;
@@ -545,6 +549,10 @@ body {
 }
 
 /* === SPEED STEAL (GRAVITY) === */
+.blue-steal {
+    background: radial-gradient(circle, #60A5FA, #2563EB) !important;
+}
+
 .gravity-up {
     position: absolute;
     width: 150px;
