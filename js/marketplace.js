@@ -1638,24 +1638,34 @@ function renderMarketplaceDirect(listings) {
             }).join('');
         }
         
-        return `
-            <div class="nft-card">
-                <div class="nft-image-container">
-                    <img src="${imageUrl}" alt="${pokemonName}" loading="lazy">
-                    <div class="nft-rarity">#${pokemon.id}</div>
-                    <div class="listed-badge">FOR SALE</div>
-                </div>
-                <div class="nft-info">
-                    <h3 class="nft-name">${pokemonName}</h3>
-                    <div class="type-badges-container">
-                        ${typeBadgesHTML || '<span class="type-fallback">No types</span>'}
-                    </div>
-                    <p class="nft-price">${price} PKN</p>
-                    
-                </div>
-                <button class="buy-btn" onclick="buyListedNFT(${item.tokenId})">Buy Now</button>
-            </div>
-        `;
+        const isOwner =
+  window.userAddress &&
+  item.listing.seller.toLowerCase() === window.userAddress.toLowerCase();
+
+const buyButtonHTML = isOwner
+  ? `<button class="buy-btn disabled" disabled>Your Listing</button>`
+  : `<button class="buy-btn" onclick="buyListedNFT(${item.tokenId})">Buy Now</button>`;
+
+return `
+  <div class="nft-card">
+    <div class="nft-image-container">
+      <img src="${imageUrl}" alt="${pokemonName}" loading="lazy">
+      <div class="nft-rarity">#${pokemon.id}</div>
+      <div class="listed-badge">FOR SALE</div>
+    </div>
+
+    <div class="nft-info">
+      <h3 class="nft-name">${pokemonName}</h3>
+      <div class="type-badges-container">
+        ${typeBadgesHTML || '<span class="type-fallback">No types</span>'}
+      </div>
+      <p class="nft-price">${price} PKN</p>
+    </div>
+
+    ${buyButtonHTML}
+  </div>
+`;
+
     }).join('');
     
     grid.innerHTML = cardsHTML;

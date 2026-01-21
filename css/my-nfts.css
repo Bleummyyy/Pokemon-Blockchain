@@ -463,6 +463,43 @@ body {
   background: linear-gradient(135deg, #ee5a52, #ff6b6b);
   box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
 }
+/* ==================== CANCEL BTN ==================== */
+.cancel-btn {
+  background: linear-gradient(135deg, #ff8c00, #ff6b35);
+  color: white;
+  border: none;
+  padding: 0.8rem;
+  font-weight: bold;
+  font-size: 0.9rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cancel-btn:hover {
+  background: linear-gradient(135deg, #ff6b35, #ff8c00);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+}
+
+.sell-btn:disabled {
+  background: #666;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.sell-btn.cancel {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+}
+
+.sell-btn.cancel:hover {
+  background: linear-gradient(135deg, #ee5a52, #ff6b6b);
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+}
 
 /* ==================== LISTED STATE ==================== */
 .listed-badge {
@@ -786,3 +823,4 @@ body {
   
 }
 .panel-types{ gap:4px; justify-content:center; margin-top:15px; margin-left: 25px; }
+

@@ -200,36 +200,72 @@ async function findOwnedTokensParallel(maxTokenId) {
 // ==== CHECK SINGLE TOKEN OWNERSHIP ====
 async function checkTokenOwnership(tokenId, userAddress) {
     try {
+        // 1️⃣ Always get Pokémon ID first (needed in both cases)
+        const pokemonId = await nftContract.getPokemonId(tokenId);
+
+        // 2️⃣ Check current owner
         const owner = await nftContract.ownerOf(tokenId);
+
+        /* ===============================
+           CASE A: YOU OWN THE NFT
+        =============================== */
         if (owner.toLowerCase() === userAddress) {
-            const pokemonId = await nftContract.getPokemonId(tokenId);
-            
-            // Quick listing check
+
             let listingInfo = null;
+
             try {
                 const listing = await marketContract.getListing(tokenId);
-                if (listing.price.gt(0)) {
+                if (listing.price && listing.price.gt(0)) {
                     listingInfo = {
                         price: ethers.utils.formatUnits(listing.price, 18),
                         isListed: true
                     };
                 }
-            } catch (e) {
-                // Not listed - normal case
+            } catch (_) {
+                // not listed → normal
             }
-            
+
             return {
                 tokenId,
                 pokemonId: pokemonId.toNumber(),
                 listingInfo
             };
         }
+
+        /* ===============================
+           CASE B: NFT IS LISTED (ESCROW)
+           Owner = marketplace, seller = YOU
+        =============================== */
+        try {
+            const listing = await marketContract.getListing(tokenId);
+
+            if (
+                listing.price &&
+                listing.price.gt(0) &&
+                listing.seller &&
+                listing.seller.toLowerCase() === userAddress
+            ) {
+                return {
+                    tokenId,
+                    pokemonId: pokemonId.toNumber(),
+                    listingInfo: {
+                        price: ethers.utils.formatUnits(listing.price, 18),
+                        isListed: true
+                    }
+                };
+            }
+        } catch (_) {
+            // Not listed
+        }
+
     } catch (err) {
-        // Token doesn't exist - skip silently
+        // Token does not exist or reverted → ignore
         return null;
     }
+
     return null;
 }
+
 
 // ==== ULTRA-FAST RENDERER ====
 async function renderNFTsUltraFast(ownedTokens, grid) {
@@ -347,7 +383,7 @@ async function renderNFTsGrid(ownedNFTs, grid) {
                         <img src="${image}" alt="${name}" loading="lazy">
                         <div class="nft-rarity">#${nft.pokemonId}</div>
                         <div class="listed-badge">LISTED</div>
-                    </div>
+                    </div>  
                     <div class="nft-info">
                         <h3>${name}</h3>
                         <p class="types">${types}</p>
@@ -633,4 +669,16 @@ function makeTypeBadge(typeName){
   img.onerror = () => { img.remove(); };
   typeIconCache[typeName] = img;
   return img;
+}
+
+
+
+
+async function fetchMyListings() {
+  const listings = await marketContract.getAllListings();
+
+  return listings.filter(item =>
+    item.active &&
+    item.seller.toLowerCase() === window.userAddress.toLowerCase()
+  );
 }
