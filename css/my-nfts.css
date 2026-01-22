@@ -154,7 +154,7 @@ body {
 
 /* MOVE NAME & PRICE UP ON HOVER */
 .nft-card:hover .nft-info {
-  transform: translateY(-35px); /* Adjust this value to show more/less */
+  transform: translateY(-45px); /* Adjust this value to show more/less */
 }
 
 .nft-name {

@@ -41,12 +41,12 @@ body {
   gap: 1.2rem;
 }
 
-.logo {
-  font-size: 1.5rem;
-  color: #00d1ff;
-  text-shadow: 0 0 15px rgba(0, 209, 255, 0.6);
-  font-weight: 700;
+.logo img {
+  height: 40px;      /* adjust to your navbar */
+  width: auto;
+  display: block;
 }
+
 
 .wallet-info {
   font-family: monospace;
